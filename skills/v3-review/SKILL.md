@@ -70,6 +70,7 @@ status: running
    - standard: `impact` (**opus**), `security+regression` (**opus**), `requirements+maintainability` (**sonnet**, `VERDICT_REQUIRED: yes`).
    - full: `impact` (**opus**), `security` (**opus**), `regression` (**sonnet**), `requirements` (**sonnet**, `VERDICT_REQUIRED: yes`), `maintainability` (**sonnet**).
    Dispatch text: `MODE: review`, `CONCERN`, `PACKAGE`, `BAR` (`bar.md`), `GATES` (`gates.md`), `VERDICT_REQUIRED`. Each dispatch adds 1 to `budget_used`.
+   - **Project conventions critic** (any depth): when the project config `.claude/v3-gauntlet.md` names a `reviewer_agent`, dispatch that agent in the same message (+1 budget) as the `conventions` critic, with the package path and this instruction: "Return findings only, each in this format: ID, Severity (Critical | Important | Minor), Kind, Location (file:line), Trigger, Expected, Actual. No verdict." It never gives the verdict; its findings go through the same evidence filter.
 3. Save each critic's output to `review/round-1/<concern>.md`. Output that does not follow the format gets one re-dispatch (counts against the budget, never against the protected slot); malformed again → stop condition "every path is a guess".
 4. **Evidence filter:** drop any finding missing Location, Trigger, Expected or Actual. Count drops.
 5. Assign IDs `F1-1, F1-2, ...`. Fingerprint = `<file>:<line rounded down to 10>:<first 8 chars of shasum of the trigger>`; duplicates keep the highest severity. Write `review/round-1/findings.md`.

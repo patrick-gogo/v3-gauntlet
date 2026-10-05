@@ -64,12 +64,27 @@ branch_prefix.feat: <prefix>      e.g. feature (default: feat)
 branch_keep_id_case: yes | no     keep V3-12 instead of v3-12 in branch names
 translate: yes | no               add an English translation to ticket.md (default yes)
 context_agent: <agent name>       read-only agent PLAN asks about the touched code
+planner_agent: <agent name>       its definition is passed to the planner as the project's conventions
+reviewer_agent: <agent name>      extra "conventions" critic in /v3-review; copied into the lap rules
+lap_stop_time: HH:MM              no new ticket starts in a lap after this time (default 06:30)
+lap_timezone: <tz>                for the stop time (default Asia/Manila, the devbox's zone)
+lap_parallel: on | off            tickets in a lap at once (default off)
+lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy
 
 ## Intake
 <how to read a ticket: which tool, which site; free text>
 
 ## Gates
-<name>: <command>
+<name>: <command>                 a lap replaces {base} with the frozen base commit
+
+## Stack
+<how to bring the project's stack up and down on the build machine; copied into the lap rules>
+
+## House rules
+<project rules the builder and critics follow; copied into the lap rules>
+
+## Push day
+<how to open PRs and announce them after "push"; free text, read on the laptop>
 ```
 The queue's token is never in this file: `notion-queue.mjs` reads `NOTION_TOKEN` and `GAUNTLET_QUEUE_DB` from the environment or `~/.config/v3-gauntlet/notion.env`.
 

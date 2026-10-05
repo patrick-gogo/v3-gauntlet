@@ -9,8 +9,9 @@ set -u
 f=${1:-}; cmd=${2:-}; key=${3:-}
 [ -n "$f" ] && [ -n "$cmd" ] || { echo "usage: state.sh <file> get|set|incr|phase ..." >&2; exit 2; }
 
-# Legal phase transitions (spec section 6). "none" is a ticket with no phase yet.
-ALLOWED=" none>intake intake>designed designed>planned planned>approved approved>implementing
+# Legal phase transitions. "none" is a ticket with no phase yet. approved>pr: a lap built the
+# ticket on the devbox, so its build phases happened there and push day lands it straight at pr.
+ALLOWED=" none>intake intake>designed designed>planned planned>approved approved>implementing approved>pr
  implementing>reviewing implementing>blocked reviewing>fixing fixing>reviewing reviewing>ready
  reviewing>blocked fixing>blocked ready>handoff blocked>handoff handoff>round2 round2>implementing
  handoff>pr pr>closed "
