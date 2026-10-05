@@ -123,8 +123,10 @@ async function listChildren(call, id) {
 }
 
 async function replaceBlocks(call, id, blocks, keep = () => false, fresh = false) {
-  if (!fresh) for (const b of await listChildren(call, id)) if (!keep(b)) await call('DELETE', `/blocks/${b.id}`);
+  // Append first, delete after: a failed append must not leave the page empty.
+  const old = fresh ? [] : (await listChildren(call, id)).filter((b) => !keep(b));
   for (let i = 0; i < blocks.length; i += 100) await call('PATCH', `/blocks/${id}/children`, { children: blocks.slice(i, i + 100) });
+  for (const b of old) await call('DELETE', `/blocks/${b.id}`);
 }
 
 const USAGE = 'usage: notion-queue.mjs check | list [--status S] | upsert --key K --title T [--status S] [--repo R] [--branch B] [--notes N] [--report URL] | status --key K --status S [...] | page --key K --file F [--child T]';
@@ -144,6 +146,7 @@ export async function main(argv, deps) {
       let md;
       try { md = readFile(opts.file); } catch { throw new BadInput(`cannot read ${opts.file}`); }
       blocks = markdownToBlocks(md);
+      if (!blocks.length) throw new BadInput(`${opts.file} has no content`);
     }
 
     const { token, db } = loadConfig(env, readFile);

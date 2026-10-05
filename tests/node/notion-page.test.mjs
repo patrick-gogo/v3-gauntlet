@@ -29,14 +29,14 @@ test('body: deletes old non-page blocks, keeps sub-pages, appends new blocks', a
   const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
     { json: card },
     { json: { results: [{ id: 'b1', type: 'paragraph' }, { id: 'sp', type: 'child_page', child_page: { title: 'Plan' } }], has_more: false } },
-    { json: {} },              // DELETE b1
     { json: { results: [] } }, // PATCH append
+    { json: {} },              // DELETE b1
   ]);
   assert.equal(r.code, 0);
   assert.equal(r.calls[1].method, 'GET'); assert.match(r.calls[1].url, /\/blocks\/card1\/children/);
-  assert.equal(r.calls[2].method, 'DELETE'); assert.match(r.calls[2].url, /\/blocks\/b1$/);
-  assert.equal(r.calls[3].method, 'PATCH'); assert.match(r.calls[3].url, /\/blocks\/card1\/children$/);
-  assert.deepEqual(r.calls[3].body.children.map((b) => b.type), ['heading_1', 'paragraph']);
+  assert.equal(r.calls[2].method, 'PATCH'); assert.match(r.calls[2].url, /\/blocks\/card1\/children$/);
+  assert.equal(r.calls[3].method, 'DELETE'); assert.match(r.calls[3].url, /\/blocks\/b1$/);
+  assert.deepEqual(r.calls[2].body.children.map((b) => b.type), ['heading_1', 'paragraph']);
   assert.equal(r.calls.length, 4, 'the Plan sub-page is not deleted');
   assert.match(r.out, /page card body card1 \(2 blocks\)/);
 });
@@ -60,13 +60,32 @@ test('child: replaces an existing sub-page instead of adding a second one', asyn
     { json: card },
     { json: { results: [{ id: 'sp', type: 'child_page', child_page: { title: 'Plan' } }], has_more: false } },
     { json: { results: [{ id: 'old1', type: 'paragraph' }], has_more: false } }, // children of sp
-    { json: {} },              // DELETE old1
     { json: { results: [] } }, // PATCH append to sp
+    { json: {} },              // DELETE old1
   ]);
   assert.equal(r.code, 0);
   assert.ok(!r.calls.some((c) => c.method === 'POST' && /\/pages$/.test(c.url)), 'no new page');
-  assert.match(r.calls[3].url, /\/blocks\/old1$/);
-  assert.match(r.calls[4].url, /\/blocks\/sp\/children$/);
+  assert.match(r.calls[3].url, /\/blocks\/sp\/children$/);
+  assert.match(r.calls[4].url, /\/blocks\/old1$/);
+});
+
+test('a failed append deletes nothing', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
+    { json: card },
+    { json: { results: [{ id: 'b1', type: 'paragraph' }], has_more: false } },
+    { status: 500, json: { message: 'boom' } }, // PATCH append fails
+  ]);
+  assert.equal(r.code, 3);
+  assert.ok(!r.calls.some((c) => c.method === 'DELETE'), 'no DELETE sent');
+});
+
+test('empty or whitespace-only markdown is bad input and makes no request', async () => {
+  for (const content of ['', '  \n\n  ']) {
+    const r = await run(['page', '--key', 'V3-1', '--file', 'empty.md'], [], content);
+    assert.equal(r.code, 2);
+    assert.match(r.err, /empty\.md has no content/);
+    assert.equal(r.calls.length, 0);
+  }
 });
 
 test('more than 100 blocks are appended in order, 100 at a time', async () => {
