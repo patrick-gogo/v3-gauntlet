@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 . "$ROOT/tests/lib/assert.sh"
-EP="$ROOT/skills/gauntlet-review/scripts/exit-pair.sh"
+EP="$ROOT/skills/v3-review/scripts/exit-pair.sh"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 export REVIEW_WS="$tmp/ws"
 cd "$tmp" || exit 1
@@ -57,7 +57,7 @@ printf 'DATABASE_URL=file:./test.db\n' > "$tmp/.env.test"
 out=$(run "0 0" --reset "true" --env-file "$tmp/.env.test" --db-pattern 'test\.db$'); assert_eq 0 $? "file database treated as local"
 
 out=$(bash "$EP" --reset "true"); assert_eq 3 $? "missing --prove is could-not-run"
-git init -q "$tmp/r2"; printf '%s\n' "$tmp/ws2" > "$tmp/r2/.git/patrick-workflows-review-ws"
+git init -q "$tmp/r2"; printf '%s\n' "$tmp/ws2" > "$tmp/r2/.git/v3-gauntlet-review-ws"
 out=$(cd "$tmp/r2" && printf '0\n0\n' > "$tmp/seq" && REVIEW_WS= bash "$EP" --prove "bash '$tmp/next.sh' '$tmp/seq'"); assert_eq 0 $? "exit pair finds workspace via pointer"
 assert_file "$tmp/ws2/logs/exit-pair-1-prove.log" "exit pair logs go to pointer workspace"
 

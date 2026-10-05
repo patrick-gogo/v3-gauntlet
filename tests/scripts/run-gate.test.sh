@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 . "$ROOT/tests/lib/assert.sh"
-GATE="$ROOT/skills/gauntlet-review/scripts/run-gate.sh"
+GATE="$ROOT/skills/v3-review/scripts/run-gate.sh"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 export REVIEW_WS="$tmp/work space"   # deliberately contains a space
 
@@ -38,7 +38,7 @@ assert_contains "$(cat "$REVIEW_WS/logs/quoted.log")" "2" "quotes and pipes pres
 repo="$tmp/repo"; mkdir -p "$repo"; git -C "$repo" init -q
 out=$(cd "$repo" && REVIEW_WS= bash "$GATE" nows 5 -- "true"); code=$?
 assert_eq 3 "$code" "no REVIEW_WS and no pointer is could-not-run"
-printf '%s\n' "$tmp/from pointer" > "$repo/.git/patrick-workflows-review-ws"
+printf '%s\n' "$tmp/from pointer" > "$repo/.git/v3-gauntlet-review-ws"
 out=$(cd "$repo" && REVIEW_WS= bash "$GATE" ptr 5 -- "echo via-pointer"); code=$?
 assert_eq 0 "$code" "pointer file used when REVIEW_WS is unset"
 assert_contains "$(cat "$tmp/from pointer/logs/ptr.log")" "via-pointer" "log written to pointer workspace"
@@ -46,8 +46,8 @@ assert_contains "$(cat "$tmp/from pointer/logs/ptr.log")" "via-pointer" "log wri
 # In a linked worktree (parallel BUILD), the pointer in the main git dir still finds the workspace.
 WR="$tmp/wt-repo"; mkdir -p "$WR" "$tmp/wt-ws"
 ( cd "$WR" && git init -q && git -c user.name=t -c user.email=t@x commit -q --allow-empty -m init && git worktree add -q "$tmp/wt-linked" -b side )
-printf '%s\n' "$tmp/wt-ws" > "$WR/.git/patrick-workflows-review-ws"
-out=$(cd "$tmp/wt-linked" && env -u REVIEW_WS bash "$ROOT/skills/gauntlet-review/scripts/run-gate.sh" wt 10 -- "true"); code=$?
+printf '%s\n' "$tmp/wt-ws" > "$WR/.git/v3-gauntlet-review-ws"
+out=$(cd "$tmp/wt-linked" && env -u REVIEW_WS bash "$ROOT/skills/v3-review/scripts/run-gate.sh" wt 10 -- "true"); code=$?
 assert_eq 0 "$code" "gate in a linked worktree runs"
 assert_file "$tmp/wt-ws/logs/wt.log" "linked worktree gate logs to the main workspace"
 finish

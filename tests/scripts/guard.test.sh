@@ -17,7 +17,7 @@ hook "$tmp/plain" 'git commit -m "feat: add x"'; assert_eq 0 "$code" "clean comm
 hook "$tmp/plain" "git commit -m \"feat: x
 
 $T\""; assert_eq 2 "$code" "trailer in -m blocked"
-assert_contains "$err" "patrick-workflows guard: " "block reason prefix"
+assert_contains "$err" "v3-gauntlet guard: " "block reason prefix"
 hook "$tmp/plain" "cd a && git commit -F - <<'EOF'
 feat: x
 
@@ -44,7 +44,7 @@ hook "$tmp/plain" 'ls -la'; assert_eq 0 "$code" "unrelated command allowed"
 
 out=$(printf '' | bash "$GUARD" 2>&1); assert_eq "0:" "$?:$out" "empty stdin allowed silently"
 out=$(printf '{not json' | bash "$GUARD" 2>&1); assert_eq "0:" "$?:$out" "invalid JSON allowed silently"
-out=$(perl -MJSON::PP -e 'print encode_json({cwd=>"/x",tool_input=>{command=>"git commit -m \"x\n\n$ARGV[0]: Claude <a\@b>\""}})' "$CO" | PATRICK_WORKFLOWS_GUARD=off bash "$GUARD" 2>&1); assert_eq "0:" "$?:$out" "PATRICK_WORKFLOWS_GUARD=off disables"
+out=$(perl -MJSON::PP -e 'print encode_json({cwd=>"/x",tool_input=>{command=>"git commit -m \"x\n\n$ARGV[0]: Claude <a\@b>\""}})' "$CO" | V3_GAUNTLET_GUARD=off bash "$GUARD" 2>&1); assert_eq "0:" "$?:$out" "V3_GAUNTLET_GUARD=off disables"
 
 hj=$(cat "$ROOT/hooks/hooks.json")
 assert_contains "$hj" '"PreToolUse"' "hook event registered"

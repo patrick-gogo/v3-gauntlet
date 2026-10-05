@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build the gauntlet-review fixture: main (with one known red test) and feat/discounts (seeded defects).
+# Build the v3-review fixture: main (with one known red test) and feat/discounts (seeded defects).
 # Usage: setup.sh <dest>
 set -eu
 dest=${1:?usage: setup.sh <dest>}
