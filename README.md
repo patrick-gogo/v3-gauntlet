@@ -37,15 +37,30 @@ only reaches other machines after `version` is bumped in
 ## /v3-ticket
 
 ```
-/v3-ticket ABC-123        start or continue a ticket (ID, URL, or pasted text)
-/v3-ticket                list tickets in this repo
+/v3-ticket ABC-123        plan a ticket, or continue one (ID, URL, or pasted text)
+/v3-ticket ABC-123 build  build a Planned ticket here instead of waiting for a lap
+/v3-ticket                list tickets in this repo (and the queue's Inbox)
 ```
 
-- **PLAN (with you):** reads the ticket, settles acceptance criteria, creates the branch (or a worktree, if you ask for one), brainstorms the design, writes the plan, and agrees an autonomy brief: gates, scope, review depth, budget, an optional exit pair, and the permission rules to add.
-- **BUILD (on its own):** one fresh implementer and reviewer per task, test first, gates re-run by the orchestrator, then the `/v3-review` loop. Asks nothing.
+- **PLAN (on its own, then one stop):** reads the ticket (and translates it when it is not in English), settles acceptance criteria, reads the touched code, brainstorms the design, writes the plan and the autonomy brief (gates, scope, review depth, budget, parallel waves). Every open question is decided with its recommendation and logged as a ruling, tagged T1/T2/T3. Then it shows one batch: answer `1 keep 2 change: <what> 3 keep` or `all keep`. Changes go into the plan and only the changed rulings come back. When a batch is all keep, the ticket is **Planned** and lands on the queue board. PLAN never creates the branch or starts BUILD.
+- **BUILD (on its own):** creates the branch from the recorded base, one fresh implementer and reviewer per task, test first, gates re-run by the orchestrator, then the `/v3-review` loop. Asks nothing.
 - **SHIP (with you):** one report with numbered questions. Ask for changes and it runs a second round; say yes and it scans for secrets, then opens a draft PR.
 
 Run `/v3-ticket <id>` again at any time to resume where it stopped. If another plugin also defines `/v3-ticket` or `/v3-review`, use the namespaced form: `/v3-gauntlet:v3-ticket`, `/v3-gauntlet:v3-review`. Working files live in `~/.v3-gauntlet/tickets/<repo>/<id>/`. After the PR is merged, run `/v3-ticket <id>` once more: it marks the ticket done (a GitHub issue is closed by the URL recorded at intake, never by bare number) and cleans up. After a squash or rebase merge it deletes the local branch with `-D` only when the branch tip is exactly the commit GitHub merged; otherwise it keeps the branch and says why.
+
+**Project config.** A work project can keep its settings in `.claude/v3-gauntlet.md` (out of git): branch prefixes, how to read tickets, gates, the code-context agent, and `queue: notion`. The keys are listed in the `ticket-workspace` skill.
+
+**Queue board (Notion).** With `queue: notion`, PLAN adds each Planned ticket to a Notion database with the columns `Ticket` (title), `Key`, `Status` (Inbox, Planned, Queued, Running, Needs you, Ready, PR open, Done), `Order`, `Repo`, `Branch`, `Report`, `Notes`. One-time setup:
+1. Create an internal integration at notion.so/my-integrations and copy its secret.
+2. Open the database in Notion, then `•••` → Connections → add the integration (it sees only what you share with it).
+3. Write `~/.config/v3-gauntlet/notion.env` (never into a repo):
+   ```
+   NOTION_TOKEN=<the secret>
+   GAUNTLET_QUEUE_DB=<the database id from its URL>
+   ```
+4. Check it: `node <plugin>/skills/ticket-workspace/scripts/notion-queue.mjs check` prints `NOTION: ok (<database title>)`.
+
+The board never blocks PLAN: if Notion cannot be reached, PLAN says so and you add the card by hand.
 
 Optional: list company names and internal hostnames, one per line, in your work project's `.claude/v3-gauntlet-deny.txt`. SHIP refuses to open a PR whose body or diff contains them.
 
@@ -79,7 +94,7 @@ Working files go to `~/.v3-gauntlet/tickets/<repo>/_reviews/` (override with `TI
 
 **Exit pair safety.** `--reset` runs only when the database in `--env-file` matches `--db-pattern` and its host is local. Anything else is refused before a reset runs.
 
-Tests: `bash tests/run.sh`. End-to-end: `tests/SMOKE.md`.
+Tests: `bash tests/run.sh` (the queue client's tests run with Node, which ships with Claude Code). End-to-end: `tests/SMOKE.md`.
 
 ## Guardrails
 A `PreToolUse` hook on Bash (`hooks/guard.sh`) blocks:
