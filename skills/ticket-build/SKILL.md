@@ -16,7 +16,7 @@ Read `v3-gauntlet:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-wor
 
 ## 0. Every entry, including resumes
 **Where to work.** Read `checkout` from state.
-- `worktree` (the default; the worktree does not exist yet): once, add `.claude/worktrees/` to `$(git rev-parse --git-common-dir)/info/exclude` if it is not there. Call the `EnterWorktree` tool with `name` = the ticket ID (it creates the worktree under `.claude/worktrees/` and moves the session into it). There, `git switch <branch>` if the branch exists, else `git switch -c <branch> <base>`. Then `S set checkout "<the worktree path>"` (`git rev-parse --show-toplevel`).
+- `worktree` (the default; no path recorded yet): once, add `.claude/worktrees/` to `$(git rev-parse --git-common-dir)/info/exclude` if it is not there. If `.claude/worktrees/<ticket id>` already exists (a crash after creating it), call `EnterWorktree` with `path` set to it instead of creating a new one. Otherwise call the `EnterWorktree` tool with `name` = the ticket ID (it creates the worktree under `.claude/worktrees/` and moves the session into it). Right after `EnterWorktree` returns, before anything else, `S set checkout "<the worktree path>"` (`git rev-parse --show-toplevel`), so a crash from here on resumes in this worktree. Then `git switch <branch>` if the branch exists, else `git switch -c <branch> <base>`.
 - A path: enter it as the Worktrees rule in `v3-gauntlet:ticket-workspace` says (`EnterWorktree` with `path`).
 - `main`: work in the main checkout. This is the only case where BUILD switches branches there.
 
