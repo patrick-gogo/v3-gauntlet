@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the queue card the place to read a ticket (tracker text plus English, design, plan, rulings, lap handoff), move the tracker ticket to In Progress at intake, let local builds and push day stay out of the main checkout, and state the lap stop time as an explicit date.
+**Goal:** Apply the lap 1 lessons, and make the queue card the place to read a ticket (tracker text plus English, design, plan, rulings, lap handoff), move the tracker ticket to In Progress at intake, let local builds and push day stay out of the main checkout, and state the lap stop time as an explicit date.
 
 **Architecture:** A small markdown-to-Notion-blocks converter (`notion-md.mjs`) feeds a new `page` command in `notion-queue.mjs` that replaces the card body or one named sub-page. The PLAN and lap skills call it at fixed points. Tracker status and push behaviour come from the private project config, so the plugin stays generic. A `stop-time.mjs` helper turns `HH:MM` + time zone into the next occurrence.
 
@@ -11,6 +11,7 @@
 **Spec:** this plan; the decisions it implements are in "Decisions" below (proposed 2026-10-05, defaults taken where the owner had not answered).
 
 ## Decisions (defaults used; owner may change before execution)
+Task 7 (added 2026-10-05 after lap 1, at the owner's request) carries its own decisions.
 1. The card **body** holds the ticket (tracker text verbatim, then `## English translation`); Design, Plan, Rulings and Handoff are **sub-pages** of the card.
 2. The tracker ticket moves To Do -> In Progress **at intake** (PLAN step 2), only when it is assigned to the user and in To Do, without asking.
 3. The card is created **at intake** with status Inbox (not only at Planned).
@@ -513,6 +514,93 @@ git commit -m "feat: build in a worktree by default and keep push hooks out of t
 ```bash
 git add README.md docs/HANDOFF.md .claude-plugin/plugin.json
 git commit -m "docs: describe the queue card, tracker status and worktree option, release 0.4.0"
+```
+
+---
+
+### Task 7: Lap 1 lessons
+
+Lap 1 (V3-2475, 2026-10-05) worked end to end and showed six fixes. Decisions:
+- **Author:** the devbox commits as its default user (`patrick <patrick@devbox.local>`). The brief carries the laptop's `git config user.name` / `user.email`, and the lead sets them in every worktree at GO. `lap-check.sh --author <email>` refuses a branch with any commit by another author. Push day re-authors unpublished lap commits only when `--author` fails and nothing else does.
+- **No attribution in the rails:** the lead told a helper to add a co-author trailer and had to amend it out; the rule was only in the project's house rules. It becomes rail 13 of `RULES.md`.
+- **`origin/<base>` for tools:** the devbox has no remote; the frontend ratchet needs `refs/remotes/origin/master`. At GO the lead creates `refs/remotes/origin/<base_branch>` at `BASE` and deletes it at cleanup.
+- **Baseline runs every gate**, browser checks included, on `BASE` (lap 1 skipped the smoke test on the base).
+- **Batch replies:** `ruling-reply.sh` accepts ranges (`1-5 keep`) and `yes` / `no` answers (for yes/no questions); its output adds `<n> yes` / `<n> no` lines.
+- **Readable questions:** handoff section 0, the PLAN batch and `/v3-lap result` show one block per question (title and level, then Question / Pick / Why on their own lines), the last line giving the reply to accept every pick.
+
+**Files:**
+- Modify: `skills/ticket-workspace/scripts/ruling-reply.sh`, `tests/scripts/ruling-reply.test.sh`
+- Modify: `skills/lap/scripts/lap-check.sh`, `tests/scripts/lap-check.test.sh`
+- Modify: `skills/lap/templates/RULES.md` (rail 13; GO: identity + origin ref; 2.2 baseline every gate incl. browser checks; cleanup removes the ref; section 8 block layout), `skills/lap/templates/lead-brief.md` (`{git_name}`, `{git_email}`), `skills/lap/SKILL.md` (step 6 fills the identity; result step 5 block layout; push step 1 `--author`, re-author rule), `skills/ticket-plan/SKILL.md` (step 8 block layout)
+
+**Interfaces:**
+- `ruling-reply.sh <n> "<reply>"`: also prints `<k> yes` / `<k> no`; `a-b <verb>` applies the verb to every number from a to b.
+- `lap-check.sh <branch> <base> [--snapshot <sha>] [--author <email>]`: with `--author`, every commit in `base..branch` must have that author email, else `not safe` with `author <email> on <short sha>` lines.
+
+- [ ] **Step 1: Failing tests for the parser** (append to `tests/scripts/ruling-reply.test.sh` before `finish`)
+
+```bash
+out=$(bash "$S" 7 "1-5 keep. 6 yes 7 no"); code=$?
+assert_eq 0 "$code" "ranges and yes/no answers"
+assert_eq "1 keep
+2 keep
+3 keep
+4 keep
+5 keep
+6 yes
+7 no" "$out" "a range expands, yes/no pass through"
+
+out=$(bash "$S" 3 "1-2 change: use the modal 3 keep"); code=$?
+assert_eq 0 "$code" "a range with change text"
+assert_eq "1 change use the modal
+2 change use the modal
+3 keep" "$out" "change text applies to the whole range"
+
+out=$(bash "$S" 3 "2-5 keep 1 keep" 2>&1); code=$?
+assert_eq 2 "$code" "a range past the last ruling is refused"
+assert_contains "$out" "no ruling 4" "names the first unknown number"
+
+out=$(bash "$S" 2 "1 yes please 2 no" 2>&1); code=$?
+assert_eq 2 "$code" "yes/no take no text"
+```
+
+- [ ] **Step 2: Failing tests for the author check** (append to `tests/scripts/lap-check.test.sh` before `finish`)
+
+```bash
+git switch -qc bugfix/T-6-author "$BASE"; echo e >> app.txt
+git -c user.name=devbox -c user.email=devbox@devbox.local commit -qam "fix(T-6): By the devbox"
+out=$(bash "$C" bugfix/T-6-author "$BASE" --author t@example.com 2>&1); code=$?
+assert_eq 1 "$code" "a commit by another author fails with --author"
+assert_contains "$out" "author devbox@devbox.local on" "names the wrong author"
+out=$(bash "$C" bugfix/T-1-good "$BASE" --author t@example.com); code=$?
+assert_eq 0 "$code" "the right author passes"
+out=$(bash "$C" bugfix/T-1-good "$BASE" --snapshot "$BASE" --author t@example.com 2>&1); code=$?
+assert_eq 1 "$code" "--snapshot and --author work together"
+```
+
+- [ ] **Step 3: Run both test files, confirm the new checks fail**
+Run: `bash tests/scripts/ruling-reply.test.sh; bash tests/scripts/lap-check.test.sh`
+Expected: the new checks FAIL (ranges and yes/no are "say keep or change"; `--author` is ignored).
+
+- [ ] **Step 4: Implement**
+- `ruling-reply.sh`: add `yes` / `no` to the verb function; a verb of `yes` / `no` takes no text (like keep) and prints `<n> yes` / `<n> no`; before tokenising, expand `a-b` tokens (digits, a hyphen, digits, optional trailing `.`) into the numbers a..b, each followed by the next verb and its text. A number above the count is `no ruling <n>`. Keep bash 3.2 and BSD awk compatibility.
+- `lap-check.sh`: parse `--snapshot` and `--author` in any order after the two positionals; with `--author`, `git log --format='%ae %h' base..branch` and add `author <email> on <sha>` for each mismatch.
+
+- [ ] **Step 5: Run both test files, confirm they pass; run `bash tests/run.sh` once** (only the 4 known Windows-only failures).
+
+- [ ] **Step 6: Templates and skills**
+- `RULES.md` rail 13: "**No tool attribution, ever.** No co-author trailers, no 'Generated with' lines, in any commit, by you or any helper. Never ask a helper to add one."
+- `RULES.md` 2.1 GO, new items: "Set the commit identity from the brief in every worktree you make: `git -C <worktree> config user.name "<git_name>"` and `user.email "<git_email>"`." and "Some project tools compare against `origin/<base_branch>`; there is no remote here, so create it: `git update-ref refs/remotes/origin/<base_branch> $BASE`. Delete it at cleanup (`git update-ref -d ...`)."
+- `RULES.md` 2.2.3: "every gate in the Gates section, browser checks included" on `BASE`.
+- `RULES.md` section 8, question format: one block per question: `**<n>. <short title>** · <T-level or follow-up or decision>` then `- **Question:** ...`, `- **Pick:** ...`, `- **Why:** ...`, and a closing line `To accept every pick: <the reply>`.
+- `lead-brief.md`: a line `- Commit identity: {git_name} <{git_email}>. Set it in every worktree before the first commit.`
+- `lap/SKILL.md` start step 6: fill `{git_name}` / `{git_email}` from the main checkout's `git config user.name` / `user.email`. Result step 5: show section 0 in the block layout above (rewrite it if the handoff did not use it). Push step 1: `lap-check.sh "$R" <base> --author <git_email>`; when the only failures are `author` lines, re-author in the temporary worktree before pushing: `git -C "<tmp>" -c user.name="<git_name>" -c user.email="<git_email>" rebase -q --exec 'git commit --amend --no-edit --reset-author' <base>` (the commits were never published, so nothing shared is rewritten), then run `lap-check.sh` again on the re-authored branch; any other failure still skips the ticket.
+- `ticket-plan/SKILL.md` step 8.1: the batch uses the same block layout.
+
+- [ ] **Step 7: Commit**
+```bash
+git add skills/ticket-workspace/scripts/ruling-reply.sh tests/scripts/ruling-reply.test.sh skills/lap/scripts/lap-check.sh tests/scripts/lap-check.test.sh skills/lap/templates/RULES.md skills/lap/templates/lead-brief.md skills/lap/SKILL.md skills/ticket-plan/SKILL.md
+git commit -m "fix: apply lap 1 lessons (commit identity, no attribution rail, origin ref, full baseline, replies, question layout)"
 ```
 
 ---
