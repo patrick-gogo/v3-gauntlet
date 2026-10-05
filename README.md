@@ -33,6 +33,7 @@ only reaches other machines after `version` is bumped in
 | `agents/<name>.md` | Subagents |
 | `hooks/` | PreToolUse guard (`guard.sh`, registered in `hooks.json`) |
 | `templates/` | CLAUDE.md and settings.json to copy manually (plugins can't ship these) |
+| `skills/lap/templates/` | the lap rules (`RULES.md`) and lead brief `/v3-lap` writes into the repo |
 
 ## /v3-ticket
 
@@ -65,6 +66,30 @@ The board never blocks PLAN: if Notion cannot be reached, PLAN says so and you a
 Optional: list company names and internal hostnames, one per line, in your work project's `.claude/v3-gauntlet-deny.txt`. SHIP refuses to open a PR whose body or diff contains them.
 
 Permission rules: absolute paths outside your home directory need a leading `//` (for example `Edit(//opt/data/**)`); paths under your home use `~/`.
+
+## /v3-lap
+
+Runs the queue's **Queued** tickets as an unattended lap on a devbox (an always-on machine reached through the devbox Claude Code plugin), in the gauntlet-loop style: build test-first, review with fresh critics, merge into a throwaway wave, run the gates and browser checks until two runs in a row are green, then hand off.
+
+```
+/v3-lap                     pack the Queued tickets and start a devbox lead; close the laptop
+/v3-lap result              bring the night home: board updated, the handoff's questions shown
+/v3-lap answer "1 keep 2 change: ..."   answer; changes start round 2 in the same devbox session
+/v3-lap push                push day, only on your word: safety check, secret scan, push, draft PRs
+```
+
+The lap is sent from a clean temporary worktree at the base branch, never from your working checkout. It carries `docs/gauntlet/<lap>/` (the lead brief, each ticket's plan and rulings) and `docs/gauntlet/RULES.md` (the lap rules plus the project config's Gates, Stack and House rules). The devbox needs none of these plugins. Ticket branches come home as `devbox/<lap>/<branch>`; `lap-check.sh` refuses to push one that is not built on the clean base, has no commits, or carries `docs/gauntlet/` files.
+
+### Known limits
+- **Push day runs on the laptop.** Devbox jobs have no git remote and no GitHub login, so they never push; `/v3-lap push` does it from the laptop with your own credentials.
+- **The board does not move overnight.** Devbox jobs have no Notion token, so `/v3-lap` marks tickets Running at the start and `/v3-lap result` moves them to Ready or Needs you in the morning.
+- **No plugins on the devbox.** The lap's rules travel as files (`RULES.md`), including the test-first discipline; the quality of a lap depends on that file.
+- **`devbox-git push` folds uncommitted changes into a snapshot commit.** That is why a lap is packed from a clean worktree. Never start real lap work from a dirty checkout with the bare devbox commands.
+- **Only `devbox/...` branches come home** with `devbox-git fetch`.
+- **Job summaries are cut to their last part** on the devbox; the handoff file on the job's branch is the record, not the summary.
+- **One stack at a time.** A project stack with fixed ports and no swap means builds, test suites and browser runs take turns, and a cold start can take about 10 minutes.
+- **Known reds.** Tests already failing on the base are recorded first and never count against a ticket; only new failures do.
+- **Shared Claude accounts:** set `lap_stop_time` so a lap does not start new tickets right before the workday.
 
 ## /v3-review
 

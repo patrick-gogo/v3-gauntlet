@@ -37,5 +37,37 @@ The full plan (change list 1 to 20, decisions, order) is on the Notion page "v3-
 - No git remote and `gh` not logged in inside jobs. Notion API reachable; no token there.
 - The V3 stack, a backend pytest file, the ruff ratchet (pip venv, no uv), a frontend build and a Playwright smoke test all ran unattended from a clean worktree. Cold start about 10 minutes. Some backend tests already fail on clean master, so known reds from the baseline matter. Fixed ports: one stack at a time.
 
+## Built: items 6 to 14 (2026-10-05, v0.3.0), not yet run in a real lap
+- `/v3-lap` (`skills/lap/`, `commands/v3-lap.md`): start (clean worktree at the base, `lap-pack.sh`, `RULES.md` + lead brief, `devbox-git push`, `start_agent` lead, board Running), `result` (fetch, read the handoff from the job branch, board Ready / Needs you), `answer` (parse, record, follow-up for round 2), `push` (laptop push day).
+- `lap-pack.sh` (18 checks) and `lap-check.sh` (12 checks). `state.sh` allows `approved -> pr` for lap-built tickets.
+- `skills/lap/templates/RULES.md`: rails, stages (GO, freeze base, baseline, build test-first, task review, ticket review, wave, run, triage, exit pair, handoff), round 2, statuses, budgets, rulings, findings, handoff format.
+- Project agents: `planner_agent` is passed to the planner as conventions (format and test commands stay the plugin's, because the work project's planner writes another format for a Windows test runner); `reviewer_agent` is an extra conventions critic in `/v3-review` and is copied into `RULES.md` for the devbox.
+- SHIP's "Rebase" option is now "Merge the base in"; the plugin never rebases.
+- The work project's private config lives in its own `.claude/v3-gauntlet.md` (git-ignored there).
+
+## Caveats and behaviours to know
+Setup
+- **No GitHub token on the devbox** (the optional field was left empty) and jobs have **no git remote**: jobs cannot push or open PRs. Push day is `/v3-lap push` on the laptop. Adding a token later would allow devbox pushes, but the plugin does not use that.
+- **No Notion token on the devbox.** SSH into the space was refused for the user's key at both the relay and the LAN address; the right host or port is unknown. The board is updated by the laptop only: Running at `/v3-lap`, Ready / Needs you at `/v3-lap result`. It does not move overnight.
+- **Notion token on the laptop only**, in `~/.config/v3-gauntlet/notion.env`, shared with the queue database alone. It can create and update cards, not delete them.
+- **The Atlassian Rovo connection on the laptop is logged in as a different person**, so tracker reads use the Composio connection first (set in the private config's Intake).
+- **The devbox runs on a shared Claude account.** The stop time (default 06:30 Asia/Manila) keeps a lap from starting new tickets right before the workday.
+
+Devbox behaviour
+- **No plugins or skills in the space** (no superpowers, no v3-gauntlet, no user agents). Everything the lead follows is in `docs/gauntlet/RULES.md`.
+- **`devbox-git push` snapshots uncommitted work into a commit** on top of HEAD. A lap is packed from a clean worktree at the base so local edits never go; never run real lap work with the bare devbox commands from a dirty checkout.
+- **Only `refs/heads/devbox/*` comes home** with `devbox-git fetch`. Ticket branches must be `devbox/<lap>/<branch>`.
+- **Job summaries are truncated** to their last part. The handoff file on the job branch is the record. A follow-up to the same job can ask for a short re-statement.
+- **`wait_for_agents` returns "timed out" well before its 600 s**; poll `get_result` / `list_agents` instead of trusting the wait.
+- **Space:** 8 CPUs, 12 GB RAM, no swap; `uv` and `psql` missing (ruff ratchet runs from a pip venv). The work project's own MCP server fails there (Windows path), harmlessly.
+- **Stack:** fixed ports, one stack at a time; cold start about 10 minutes with the frontend build. Some backend tests already fail on the base: they are known reds. The work project's `pytest.ini` uses a `[tool:pytest]` header pytest ignores.
+
+Laptop and repo
+- **The frontend unit-test gate (Jest) was not run in the devbox spike**; only the ruff ratchet, a backend pytest file, a frontend build and a Playwright smoke test were.
+- **First real lap not run yet.** `RULES.md`, the lead brief and `/v3-lap result|answer|push` are unproven; expect fixes after lap 1.
+- **Windows:** Git Bash has no `python3`, so 4 checks fail (validate JSON x2, a dev-server timing check, a fixture check). Node's `process.exit()` after a fetch aborts on Windows; the queue client sets `process.exitCode` instead.
+- **Guard hook:** while a ticket is Planned (phase `approved`), commits on its base branch are blocked in that checkout.
+- **Public repo:** commits so far carry the author's work email; company values stay in the private config.
+
 ## Next
-Items 6 to 14: V3 project config with gates, `docs/gauntlet/RULES.md` template, `/v3-lap`, handoff format, SHIP split. Then a manual mini-lap.
+Lap 1: plan one small ticket with `/v3-ticket`, drag it to Queued, run `/v3-lap`, then `result` / `answer` / `push`. Fix what it shows.
