@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gauntlet Flow</title>
+<style>
+  :root{
+    --bg:#05060f; --maze:#1f3cff; --maze-dim:#14227a; --text:#e9ecff; --muted:#9aa3d6;
+    --pac:#ffd400; --dot:#ffcf9e; --day:#0b1530; --night:#070818; --morning:#1a1022;
+    --panel:#0d1028; --ok:#3ddc84; --chg:#ffb02e; --new:#4fc3ff; --spike:#ff5fa2;
+    --ghost1:#ff3b3b; --ghost2:#ffb8ff; --ghost3:#00e5ff; --ghost4:#ffb852;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font:15px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  header{padding:20px 16px 8px;max-width:1200px;margin:0 auto}
+  h1{margin:0;font-size:22px;letter-spacing:2px;color:var(--pac);text-transform:uppercase}
+  .sub{color:var(--muted);margin:4px 0 12px}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button{background:#111536;color:var(--text);border:2px solid var(--maze);border-radius:6px;
+    padding:6px 12px;font:inherit;cursor:pointer}
+  button:hover{background:var(--maze-dim)}
+  button:focus-visible{outline:2px solid var(--pac);outline-offset:2px}
+  .score{margin-left:auto;color:var(--pac);letter-spacing:1px}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;color:var(--muted);font-size:13px}
+  .badge{display:inline-block;padding:1px 7px;border-radius:999px;font-size:12px;font-weight:700;color:#05060f}
+  .b-ok{background:var(--ok)} .b-chg{background:var(--chg)} .b-new{background:var(--new)} .b-spike{background:var(--spike)}
+  main{max-width:1200px;margin:0 auto;padding:8px 16px 40px;display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media (max-width:900px){main{grid-template-columns:1fr}}
+  #board{position:relative}
+  .lane{position:relative;border:3px solid var(--maze);border-radius:14px;padding:30px 14px 16px;margin-bottom:22px;
+    box-shadow:0 0 0 3px var(--bg) inset,0 0 0 6px var(--maze-dim) inset}
+  .lane.day{background:var(--day)} .lane.night{background:var(--night)} .lane.morning{background:var(--morning)}
+  .lane-title{position:absolute;top:-13px;left:16px;background:var(--bg);padding:0 8px;color:var(--pac);
+    font-weight:700;letter-spacing:1px}
+  .lane-where{position:absolute;top:-12px;right:16px;background:var(--bg);padding:0 8px;color:var(--muted);font-size:12px}
+  .track{display:flex;flex-wrap:wrap;align-items:center;row-gap:18px}
+  .node{position:relative;width:118px;min-height:86px;border:2px solid var(--maze);border-radius:10px;
+    background:#090c22;padding:8px 8px 6px;cursor:pointer;text-align:left;color:var(--text);font:inherit;font-size:12px}
+  .node:hover,.node.active{border-color:var(--pac);box-shadow:0 0 12px rgba(255,212,0,.45)}
+  .node .n{color:var(--muted);font-size:11px}
+  .node .t{display:block;font-weight:700;font-size:13px;line-height:1.25;margin:2px 0 4px}
+  .node .badge{font-size:10px}
+  .node .loop{display:block;color:var(--spike);font-size:10px;margin-top:4px}
+  .dots{display:flex;align-items:center;justify-content:space-around;width:44px;height:86px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--dot);transition:opacity .15s}
+  .dot.pellet{width:14px;height:14px;animation:blink .6s steps(2) infinite}
+  .dot.eaten{opacity:0}
+  @keyframes blink{50%{opacity:.25}}
+  .tunnel{color:var(--muted);font-size:12px;text-align:center;margin:-12px 0 10px}
+  #pac{position:absolute;left:0;top:0;width:30px;height:30px;border-radius:50%;background:var(--pac);
+    z-index:5;pointer-events:none;transition:transform .9s linear;animation:chomp .22s infinite alternate}
+  @keyframes chomp{
+    from{clip-path:polygon(100% 76%,46% 50%,100% 24%,100% 0,0 0,0 100%,100% 100%)}
+    to{clip-path:polygon(100% 52%,46% 50%,100% 48%,100% 0,0 0,0 100%,100% 100%)}}
+  .ghosts{display:flex;gap:10px;margin:14px 2px 0;flex-wrap:wrap;align-items:flex-end}
+  .ghost{position:relative;width:26px;height:28px;border-radius:13px 13px 3px 3px;animation:float 1.4s ease-in-out infinite}
+  .ghost::before,.ghost::after{content:"";position:absolute;top:8px;width:7px;height:8px;background:#fff;border-radius:50%}
+  .ghost::before{left:5px} .ghost::after{right:5px}
+  .ghost span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--muted);white-space:nowrap}
+  .g1{background:var(--ghost1)} .g2{background:var(--ghost2);animation-delay:.3s} .g3{background:var(--ghost3);animation-delay:.6s} .g4{background:var(--ghost4);animation-delay:.9s}
+  @keyframes float{50%{transform:translateY(-4px)}}
+  .ghost-note{color:var(--muted);font-size:12px;margin-left:6px}
+  aside{position:sticky;top:12px;align-self:start;display:flex;flex-direction:column;gap:16px}
+  .panel{background:var(--panel);border:2px solid var(--maze);border-radius:12px;padding:14px 16px}
+  .panel h2{margin:0 0 4px;font-size:17px;color:var(--pac)}
+  .panel h3{margin:14px 0 4px;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+  .panel ul{margin:4px 0;padding-left:18px} .panel li{margin:3px 0}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+  .chip{border:1px solid var(--maze);border-radius:6px;padding:0 6px;font-size:12px;color:var(--muted)}
+  code{color:var(--pac)}
+  .reply{background:#05060f;border:1px dashed var(--maze);border-radius:8px;padding:8px;margin-top:8px;white-space:pre-wrap;font-size:12px}
+  footer{max-width:1200px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+  @media (prefers-reduced-motion:reduce){#pac,.ghost,.dot.pellet{animation:none}#pac{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>v3-gauntlet &times; devbox</h1>
+  <div class="sub">You plan by day on the laptop. The devbox lead builds and tests by night from files in docs/gauntlet/. You answer and say "push" in the morning. Click any box, or press Play.</div>
+  <div class="bar">
+    <button id="play">&#9654; Play</button>
+    <button id="step">Step</button>
+    <button id="reset">Reset</button>
+    <span class="score">SCORE <b id="score">0</b> &nbsp; COMMITS <b id="commits">0</b></span>
+  </div>
+  <div class="legend">
+    <span>Pac-Man = the ticket moving through the flow</span>
+    <span>dots = steps &middot; power pellet = a commit</span>
+    <span>ghosts = the lead's helpers and critics</span>
+  </div>
+  <div class="legend">
+    <span><span class="badge b-ok">EXISTS</span> in the plugin today</span>
+    <span><span class="badge b-chg">CHANGE</span> exists, needs reworking</span>
+    <span><span class="badge b-new">NEW</span> to build</span>
+    <span><span class="badge b-spike">SPIKE</span> settle on the devbox first</span>
+  </div>
+</header>
+
+<main>
+  <section id="board" aria-label="Flow board">
+    <div id="pac" aria-hidden="true"></div>
+  </section>
+  <aside>
+    <div class="panel" id="detail" aria-live="polite"></div>
+    <div class="panel">
+      <h2>Words</h2>
+      <ul>
+        <li><b>Lap</b>: one batch, from GO to handoff.</li>
+        <li><b>Round</b>: one trip from building to the exit pair. Change requests start a new round.</li>
+        <li><b>Wave</b>: every branch merged and deployed to the stack once.</li>
+        <li><b>Run</b>: one pass of the Playwright matrix, about 14 minutes.</li>
+        <li><b>Exit pair</b>: two green runs in a row on the same build.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Ruling levels</h2>
+      <ul>
+        <li><b>T1</b> obvious fix (text, typo, CSS nudge): the loop decides.</li>
+        <li><b>T2</b> a choice the shop makes (required or optional, limits, defaults): goes ahead with a pick, flagged for the PM before push.</li>
+        <li><b>T3</b> business decision (new feature, money, tax): flagged for a full talk with the PM.</li>
+        <li>Unsure between T1 and T2? Treat it as T2.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>House rules in the space</h2>
+      <ul>
+        <li>One heavy thing at a time: builds, the matrix and pytest take turns.</li>
+        <li>Check the stack is free first: <code>pgrep -f "playwright test|exit-pair|deploy-api|build-next"</code></li>
+        <li>Anything over 10 minutes runs detached.</li>
+        <li>Unclear? Write a ruling and keep going.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Spike checklist</h2>
+      <div class="sub" style="margin:0">Once you're in your devbox space</div>
+      <ul>
+        <li>Does <code>docs/gauntlet/</code> reach the job uncommitted, and stay out of commits?</li>
+        <li>Can a job read a token from the space and reach the Notion API?</li>
+        <li>The build rules use superpowers skills: inline them in RULES.md, or are they installed in the space?</li>
+        <li>Can a job push and use Jira on "push" day? (tokens in the space)</li>
+        <li>Which permission mode do jobs run in?</li>
+        <li><code>command -v perl jq setsid timeout curl</code></li>
+      </ul>
+    </div>
+  </aside>
+</main>
+<footer>Design sketch for discussion, modelled on the devbox guide's gauntlet loop. Nothing is built yet beyond the boxes marked EXISTS.</footer>
+
+<script>
+const LANES = [
+  {id:"day", title:"DAY", where:"your laptop, with you (the plugin)"},
+  {id:"night", title:"NIGHT", where:"devbox: the lead follows docs/gauntlet/"},
+  {id:"morning", title:"MORNING", where:"you + devbox, laptop for chat"}
+];
+const S = [
+  {lane:"day", t:"Inbox", where:"Notion", who:"You", badge:"new",
+   does:["Add the ticket key (e.g. V3-1234) to the Gauntlet Queue board, column Inbox.","Inbox means: this ticket wants planning."],
+   out:["A row in Notion with Key and Title"]},
+  {lane:"day", t:"/v3-ticket PLAN", where:"Laptop", who:"Claude, you only read", badge:"chg",
+   does:["Reads the ticket from Jira and translates any Japanese.","Code-context step, brainstorm, then the planner agent writes the plan with tests per task.","Every decision goes with Claude's recommendation and becomes a numbered ruling, tagged T1 / T2 / T3. Nothing waits for you."],
+   out:["Acceptance criteria, plan, rulings, scope, gates, budget"]},
+  {lane:"day", t:"Rulings batch", where:"Laptop", who:"You", badge:"chg",
+   does:["PLAN shows every ruling it went ahead with: its pick, the alternative, the cost if wrong, and its T-level.","You answer in one line. A change is fixed in the plan before anything is built."],
+   reply:"1 keep 2 keep 3 change: reuse the existing modal 4 keep",
+   out:["Approved plan"]},
+  {lane:"day", t:"Planned", where:"Notion + laptop", who:"Claude", badge:"chg",
+   does:["The row moves to Planned.","The plan and rulings are saved, ready for /v3-lap to pack into the lap brief."],
+   out:["A ticket that can be built without asking anyone"]},
+  {lane:"day", t:"Drag to Queued", where:"Notion", who:"You", badge:"ok",
+   does:["Drag the card to Queued and set Order (lower runs first).","The Run order view shows exactly what tonight's lap will take."],
+   out:["Tonight's batch"]},
+  {lane:"day", t:"/v3-lap", where:"Laptop to devbox", who:"You start it, then close the laptop", badge:"new",
+   does:["Reads Queued rows in Order through the Notion API and marks them Running.","Writes the lap folder into the repo: docs/gauntlet/<lap>/lead-brief.md, each ticket's plan and rulings, and docs/gauntlet/RULES.md with the build and review rules (the plugin's BUILD and review steps travel as files).","Runs: /devbox:lead \"Run the gauntlet batch in docs/gauntlet/<lap>/lead-brief.md. Read docs/gauntlet/RULES.md first.\"","The lap files travel uncommitted and are never committed into a ticket's PR."],
+   out:["A devbox job (a ghost on the board)"]},
+  {lane:"night", t:"GO + freeze base", where:"Devbox", who:"The lead", badge:"new",
+   does:["Reads RULES.md, then the lead brief.","Brings the V3 stack up in Docker: database, API, storefront, admin (about 6 minutes).","Freezes a base commit and splits the work into one branch per task."],
+   out:["Branches ready, stack running"]},
+  {lane:"night", t:"BUILD", where:"Devbox", who:"Fresh implementer per task", badge:"chg", pellet:true,
+   does:["Tasks build in parallel, failing test first, then the fix.","Gates re-run by the lead itself: backend tests, ruff ratchet, frontend ratchet.","One heavy thing at a time (check the stack is free first). Anything over 10 minutes runs detached.","Each finished task is one commit (the power pellet). Unclear calls become rulings."],
+   out:["Commits, one branch per task","Ledger line per step"]},
+  {lane:"night", t:"Review + fix rounds", where:"Devbox", who:"Fresh critics (ghosts)", badge:"ok",
+   does:["A fresh reviewer per task; findings with evidence only.","Fix rounds need a failing test first; a new critic re-reviews each fix.","Loops until PASS, no progress for two rounds, or the budget ends."],
+   out:["Reviewed branches"]},
+  {lane:"night", t:"Wave", where:"Devbox", who:"The lead", badge:"new",
+   does:["Merges every branch into a throwaway integration branch.","Deploys it to the stack in the space."],
+   out:["All of tonight's work running together"]},
+  {lane:"night", t:"Run: matrix + audits", where:"Devbox", who:"The lead + helpers", badge:"new",
+   does:["One run = the Playwright matrix: real purchase and login flows, about 14 minutes.","Plus the gates, a cross-branch audit agent, and an exploring browser agent."],
+   out:["Green, or a list of reds"]},
+  {lane:"night", t:"Triage reds", where:"Devbox", who:"The lead", badge:"new", loop:"back to BUILD",
+   does:["Sorts each red by cause: product, test harness, setup, load, or already broken before.","A product bug goes back to BUILD. Every slip becomes a rule for next time."],
+   out:["Fix tasks, or notes for the handoff"]},
+  {lane:"night", t:"Exit pair", where:"Devbox", who:"The lead", badge:"chg",
+   does:["Two green whole-matrix runs in a row on the same build.","That ends the round. If it can't get there, it says why."],
+   out:["Proof the tickets work together"]},
+  {lane:"night", t:"Handoff", where:"Devbox (+ Notion)", who:"The lead", badge:"spike",
+   does:["Writes docs/gauntlet/<lap>-handoff.md. Section 0 holds the questions, each with a suggested pick.","T2 and T3 rulings made overnight are flagged: they need the PM's call before push.","Your phone pings. Notion rows move to Ready or Needs you, if a job can reach the Notion API (spike). Otherwise the laptop updates them in the morning."],
+   out:["Handoff note, local branches"]},
+  {lane:"morning", t:"Read + answer", where:"Laptop + board", who:"You", badge:"chg",
+   does:["Read the handoff. Bring the branches home with /devbox:result (they arrive as devbox/<branch>).","Answer through the board's Follow-up button. It goes to the same session, so the lead keeps its context."],
+   reply:"1 keep 2 keep 3 yes 4 change: keep the old label",
+   out:["Your answers, recorded as rulings"]},
+  {lane:"morning", t:"Round 2", where:"Devbox", who:"Only if you asked for changes", badge:"ok", loop:"back to BUILD",
+   does:["Answers that ask for changes start round 2 in the same session.","Same path: build, review, wave, run, exit pair, handoff."],
+   out:["A new handoff, smaller"]},
+  {lane:"morning", t:"Say \"push\"", where:"Devbox", who:"Only on your word", badge:"chg",
+   does:["Through Follow-up. Only then does the job push the branches, open the draft PRs (one per ticket) and post to Jira."],
+   reply:"push",
+   out:["Draft PRs"]},
+  {lane:"morning", t:"Chat + board", where:"Laptop", who:"The plugin", badge:"new",
+   does:["Drafts the chat review request (the space has no chat token).","Notion rows move to PR open."],
+   out:["Reviewers notified"]},
+  {lane:"morning", t:"Merged, Done", where:"Laptop + Notion", who:"The plugin", badge:"chg",
+   does:["After the merge: marks the ticket done and cleans up the branch.","Row moves to Done."],
+   out:["Ticket closed"]}
+];
+const BADGE = {ok:["b-ok","EXISTS"], chg:["b-chg","CHANGE"], new:["b-new","NEW"], spike:["b-spike","SPIKE"]};
+const DOTS = 4;
+
+const board = document.getElementById("board"), pac = document.getElementById("pac");
+const detail = document.getElementById("detail");
+const nodes = [], tracks = [];
+
+LANES.forEach((L, li) => {
+  const lane = document.createElement("div");
+  lane.className = "lane " + L.id;
+  lane.innerHTML = `<div class="lane-title">${L.title}</div><div class="lane-where">${L.where}</div>`;
+  const track = document.createElement("div"); track.className = "track";
+  const items = S.map((s, i) => ({s, i})).filter(x => x.s.lane === L.id);
+  items.forEach((x, k) => {
+    const b = document.createElement("button");
+    b.className = "node"; b.type = "button";
+    const [cls, label] = BADGE[x.s.badge];
+    b.innerHTML = `<span class="n">${String(x.i + 1).padStart(2, "0")}</span><span class="t">${x.s.t}</span><span class="badge ${cls}">${label}</span>${x.s.loop ? `<span class="loop">&#8634; ${x.s.loop}</span>` : ""}`;
+    b.addEventListener("click", () => { stop(); goTo(x.i, true); });
+    track.appendChild(b); nodes[x.i] = b;
+    if (k < items.length - 1) {
+      const d = document.createElement("div"); d.className = "dots";
+      for (let j = 0; j < DOTS; j++) {
+        const dot = document.createElement("span");
+        dot.className = "dot" + (x.s.pellet && j === DOTS - 1 ? " pellet" : "");
+        d.appendChild(dot);
+      }
+      track.appendChild(d); tracks[x.i] = d;
+    }
+  });
+  lane.appendChild(track);
+  if (L.id === "night") {
+    const g = document.createElement("div"); g.className = "ghosts";
+    g.innerHTML = `<div class="ghost g1"><span>V3-101</span></div><div class="ghost g2"><span>V3-102</span></div><div class="ghost g3"><span>V3-103</span></div><div class="ghost g4"><span>critic</span></div><span class="ghost-note">the lead runs helpers as ghosts; heavy steps take turns</span>`;
+    lane.appendChild(g);
+  }
+  board.appendChild(lane);
+  if (li < LANES.length - 1) {
+    const t = document.createElement("div"); t.className = "tunnel";
+    t.textContent = li === 0 ? "\u2193 hand-off: you close the laptop, the devbox takes over" : "\u2193 hand-off: your phone pings, back to you";
+    board.appendChild(t);
+  }
+});
+
+let cur = 0, timer = null, score = 0, commits = 0;
+function center(i) {
+  const b = board.getBoundingClientRect(), r = nodes[i].getBoundingClientRect();
+  return [r.left - b.left + r.width / 2 - 15, r.top - b.top - 22];
+}
+function place(i, animate) {
+  const [x, y] = center(i);
+  pac.style.transition = animate ? "" : "none";
+  pac.style.transform = `translate(${x}px,${y}px)`;
+  if (!animate) { void pac.offsetWidth; pac.style.transition = ""; }
+}
+function show(i) {
+  nodes.forEach(n => n.classList.remove("active")); nodes[i].classList.add("active");
+  const s = S[i], [cls, label] = BADGE[s.badge];
+  detail.innerHTML = `<div class="n" style="color:var(--muted)">STEP ${i + 1} OF ${S.length}</div>
+    <h2>${s.t}</h2>
+    <div class="meta"><span class="badge ${cls}">${label}</span><span class="chip">${s.where}</span><span class="chip">${s.who}</span></div>
+    <h3>What happens</h3><ul>${s.does.map(d => `<li>${d}</li>`).join("")}</ul>
+    ${s.loop ? `<h3>Loops</h3><ul><li>&#8634; ${s.loop}</li></ul>` : ""}
+    ${s.reply ? `<h3>Your reply looks like</h3><div class="reply">${s.reply}</div>` : ""}
+    <h3>Comes out</h3><ul>${s.out.map(d => `<li>${d}</li>`).join("")}</ul>`;
+}
+function eat(i) {
+  const t = tracks[i]; if (!t) return;
+  [...t.children].forEach((d, j) => setTimeout(() => {
+    if (d.classList.contains("eaten")) return;
+    d.classList.add("eaten");
+    if (d.classList.contains("pellet")) { commits++; score += 50; } else score += 10;
+    document.getElementById("score").textContent = score;
+    document.getElementById("commits").textContent = commits;
+  }, 150 + j * 180));
+}
+function goTo(i, jump) {
+  const sameLane = S[i].lane === S[cur].lane && i === cur + 1;
+  if (sameLane && !jump) eat(cur);
+  place(i, sameLane && !jump);
+  cur = i; show(i);
+}
+function next() {
+  if (cur >= S.length - 1) { stop(); return; }
+  goTo(cur + 1, false);
+}
+function play() {
+  if (timer) { stop(); return; }
+  if (cur >= S.length - 1) reset();
+  document.getElementById("play").innerHTML = "&#10074;&#10074; Pause";
+  timer = setInterval(next, 1700);
+}
+function stop() { clearInterval(timer); timer = null; document.getElementById("play").innerHTML = "&#9654; Play"; }
+function reset() {
+  stop(); score = 0; commits = 0;
+  document.getElementById("score").textContent = 0; document.getElementById("commits").textContent = 0;
+  document.querySelectorAll(".dot").forEach(d => d.classList.remove("eaten"));
+  cur = 0; place(0, false); show(0);
+}
+document.getElementById("play").onclick = play;
+document.getElementById("step").onclick = () => { stop(); next(); };
+document.getElementById("reset").onclick = reset;
+window.addEventListener("resize", () => place(cur, false));
+window.addEventListener("load", () => { place(0, false); show(0); });
+</script>
+</body>
+</html>
