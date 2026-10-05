@@ -24,7 +24,7 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$prove" ] || { echo "EXIT-PAIR: could-not-run (--prove is required)"; exit 3; }
 if [ -z "${REVIEW_WS:-}" ]; then   # same pointer fallback as run-gate.sh
-  ptr=$(git rev-parse --git-path patrick-workflows-review-ws 2>/dev/null) && [ -f "$ptr" ] && REVIEW_WS=$(head -n 1 "$ptr")
+  ptr=$(git rev-parse --git-path v3-gauntlet-review-ws 2>/dev/null) && [ -f "$ptr" ] && REVIEW_WS=$(head -n 1 "$ptr")
 fi
 [ -n "${REVIEW_WS:-}" ] || { echo "EXIT-PAIR: could-not-run (no workspace: REVIEW_WS unset and no pointer file)"; exit 3; }
 export REVIEW_WS

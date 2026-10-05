@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Ticket workspace paths: ${TICKETS_HOME:-~/.patrick-workflows/tickets}/<repo-slug>/<ticket-id>
+# Ticket workspace paths: ${TICKETS_HOME:-~/.v3-gauntlet/tickets}/<repo-slug>/<ticket-id>
 # Usage: ticket-ws.sh path <id> | init <id> | list
 # Exit: 0 ok, 1 not a git repo, 2 bad input, 3 init on an existing workspace.
 set -u
-root=${TICKETS_HOME:-$HOME/.patrick-workflows/tickets}
+root=${TICKETS_HOME:-$HOME/.v3-gauntlet/tickets}
 common=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null) || { echo "not a git repository" >&2; exit 1; }
 url=$(git config --get remote.origin.url 2>/dev/null || true)
 if [ -n "$url" ]; then slug=$(basename "$url" .git)

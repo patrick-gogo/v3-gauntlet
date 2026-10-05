@@ -1,4 +1,4 @@
-# /gauntlet-review smoke test
+# /v3-review smoke test
 
 Run before every release. Record results in the release commit message or a note.
 
@@ -12,7 +12,7 @@ Allow the rules listed in the README's Permissions section first, or the run wil
 
 ## Run 1: standard depth, scope and exit pair
 ```
-/gauntlet-review main --depth standard --scope <path to this repo>/tests/fixture/scope.txt --prove "npm run e2e" --reset "npm run db:reset" --env-file .env.test --db-pattern 'test\.db$'
+/v3-review main --depth standard --scope <path to this repo>/tests/fixture/scope.txt --prove "npm run e2e" --reset "npm run db:reset" --env-file .env.test --db-pattern 'test\.db$'
 ```
 Expected:
 - [ ] No questions asked after setup.
@@ -24,7 +24,7 @@ Expected:
 - [ ] `package-lock.json` is classified incidental; `src/billing/rates.js` is forbidden and the change is reverted by a fix round.
 - [ ] Exit pair: `pass` (reset ran before each run).
 - [ ] Outcome `READY`, or `BLOCKED` with a stated reason that matches the workspace files.
-- [ ] Nothing was pushed; the workspace is under `~/.patrick-workflows/tickets/rm-fixture/_reviews/`.
+- [ ] Nothing was pushed; the workspace is under `~/.v3-gauntlet/tickets/rm-fixture/_reviews/`.
 
 ## Run 2: refusal of an unsafe reset
 Edit `.env.test` to `DATABASE_URL=postgres://prod.example.com/app` and commit it, then rerun the Run 1 command.
@@ -35,7 +35,7 @@ Edit `.env.test` to `DATABASE_URL=postgres://prod.example.com/app` and commit it
 bash tests/fixture/setup.sh /tmp/rm-fixture-2 && cd /tmp/rm-fixture-2
 ```
 ```
-/gauntlet-review main --depth lite --no-fix
+/v3-review main --depth lite --no-fix
 ```
 - [ ] One combined critic; no commits made; report lists findings with IDs and evidence.
 

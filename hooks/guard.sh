@@ -7,9 +7,9 @@
 # Rule 3 (a ticket based on the current branch is between approved and handoff): no git commit here.
 # Tickets are found with ticket-ws.sh list and read with state.sh; unreadable state allows the command.
 # Fails open: input it cannot read allows the command and prints nothing.
-# PATRICK_WORKFLOWS_GUARD=off in Claude Code's environment turns every rule off.
+# V3_GAUNTLET_GUARD=off in Claude Code's environment turns every rule off.
 set -u
-[ "${PATRICK_WORKFLOWS_GUARD:-on}" = off ] && exit 0
+[ "${V3_GAUNTLET_GUARD:-on}" = off ] && exit 0
 in=$(cat 2>/dev/null) || exit 0
 
 # field <name>: the first "<name>": "<string>" value in the hook JSON, with its JSON escapes undone.
@@ -37,7 +37,7 @@ G='git([[:space:]]+(-[Cc][[:space:]]+[^[:space:];&|]*|--[a-z][a-z-]*(=[^[:space:
 is_commit() { has "${G}commit([[:space:]]|\$)"; }
 is_push() { has "${G}push([[:space:]]|\$)"; }
 is_pr() { has "gh +pr +(create|edit)([[:space:]]|\$)"; }
-block() { printf 'patrick-workflows guard: %s\n' "$1" >&2; exit 2; }
+block() { printf 'v3-gauntlet guard: %s\n' "$1" >&2; exit 2; }
 
 is_commit || is_push || is_pr || exit 0
 
@@ -85,7 +85,7 @@ while IFS=$tab read -r id phase; do
   if is_push && [ "$tbranch" = "$br" ]; then
     case $PRE_PR in *" $phase "*)
       [ "$(bash "$TW/state.sh" "$st" get push_approved 2>/dev/null)" = yes ] ||
-        block "ticket $id is in phase $phase: push only from /start's SHIP step, after the user approves the PR." ;;
+        block "ticket $id is in phase $phase: push only from /v3-ticket's SHIP step, after the user approves the PR." ;;
     esac
   fi
   if is_commit && [ "$(bash "$TW/state.sh" "$st" get base_branch 2>/dev/null)" = "$br" ]; then

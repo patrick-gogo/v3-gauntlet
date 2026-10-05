@@ -1,11 +1,11 @@
 ---
 name: ticket-plan
-description: PLAN stage of /start - read the ticket, settle acceptance criteria, create the branch, brainstorm the design, write the plan, and agree the autonomy brief with the user. The only interactive stage before BUILD; ends by starting BUILD.
+description: PLAN stage of /v3-ticket - read the ticket, settle acceptance criteria, create the branch, brainstorm the design, write the plan, and agree the autonomy brief with the user. The only interactive stage before BUILD; ends by starting BUILD.
 ---
 
 # PLAN
 
-Read `patrick-workflows:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-workspace/scripts/state.sh" <WS>/state.md`. Ask the user whatever you need in this stage; after the final approval nothing more is asked until SHIP.
+Read `v3-gauntlet:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-workspace/scripts/state.sh" <WS>/state.md`. Ask the user whatever you need in this stage; after the final approval nothing more is asked until SHIP.
 
 ## 1. Identify the ticket
 - An ID (`ABC-123`, `#42`): that is the ID. A URL: extract the ID from it (the issue key such as `ABC-123` in Jira-style URLs, the number in `.../issues/42` as `#42`) and keep the URL for intake; never use the URL itself as the ID. Pasted text with no ID: ask the user for a short ID (suggest `T-<yyyymmdd>-<two words>`).
@@ -29,26 +29,26 @@ Extract them into `WS/bar.md` as `AC1`, `AC2`, ... followed by a `Deferred:` lin
 Invoke `superpowers:brainstorming` with these overrides from the user, which outrank the skill: save the design to `WS/design.md` (not `docs/`); do not commit it; when the user approves the design, do not invoke writing-plans, return here. Then `S phase designed`.
 
 ## 6. Plan
-Dispatch `patrick-workflows:ticket-planner` (model opus) with `TICKET=WS/ticket.md`, `DESIGN=WS/design.md`, `BAR=WS/bar.md`, `RULINGS=WS/rulings.md` (create it empty if absent) and `OUT=WS/plan.md`. If the planner could not save the plan (permission refused), run `superpowers:writing-plans` here instead with the same overrides. Show the user the task list and risks; revise until they approve. `S set tasks_total <n>`, `S set tasks_done 0`, `S set round2 no`, `S phase planned`.
+Dispatch `v3-gauntlet:ticket-planner` (model opus) with `TICKET=WS/ticket.md`, `DESIGN=WS/design.md`, `BAR=WS/bar.md`, `RULINGS=WS/rulings.md` (create it empty if absent) and `OUT=WS/plan.md`. If the planner could not save the plan (permission refused), run `superpowers:writing-plans` here instead with the same overrides. Show the user the task list and risks; revise until they approve. `S set tasks_total <n>`, `S set tasks_done 0`, `S set round2 no`, `S phase planned`.
 
 ## 7. Autonomy brief
 Settle each item, then show the whole brief once for approval.
-1. **Gates:** detect as `gauntlet-review` does (package.json scripts `test`/`lint`/`typecheck`; Makefile `test`/`lint`; pyproject pytest/ruff; Cargo; go.mod). `S set gate.<name> <command>`; `S set gate_timeout 900`.
+1. **Gates:** detect as `v3-review` does (package.json scripts `test`/`lint`/`typecheck`; Makefile `test`/`lint`; pyproject pytest/ruff; Cargo; go.mod). `S set gate.<name> <command>`; `S set gate_timeout 900`.
 2. **Scope:** start from the planner's `SCOPE-SUGGESTION`; ask for `forbid:` paths; write `WS/scope.txt`.
 3. **Depth:** `lite` if the plan has at most 2 tasks and no path matches auth, security, crypto, payment, billing, session, token, password or permission; `full` is suggested when a path matches that list and the plan has more than 5 tasks; else `standard`. Show it as "review depth" (with the reason when `full` is suggested); the user may raise or lower it. `S set depth <depth>`.
 4. **Budget:** `S set budget_impl_max` = 2 × tasks (lite) or 4 × tasks (standard, full); `S set budget_review_max` 3 (lite), 10 (standard) or 16 (full); `S set budget_impl_used 0`.
 4b. **Parallel tasks:** `bash "$SKILL_DIR/../ticket-workspace/scripts/waves.sh" WS/plan.md` and show its waves (e.g. "Wave 1: tasks 1, 2, 3 in parallel; wave 2: task 4"). `parallel: on` by default (off for `lite`, which implements inline); the user may switch it off; suggest `off` when the gates need a fixed port or a shared database (parallel runs would collide). `S set parallel on|off`. Exit 2 (a dependency on a later or unknown task) → ask the planner to fix the plan's `Depends on:` lines first.
-5. **Exit pair (optional):** if the user wants whole-feature proof, collect `--prove`, `--reset`, `--env-file`, `--db-pattern`; run `bash "$SKILL_DIR/../gauntlet-review/scripts/exit-pair.sh" --check <flags>`. Refused → explain why, then drop it or let the user fix the env file. `S set exit_pair "<flags>"` or `S set exit_pair none`.
-5b. **Graded bar (optional, for UI or anything with a reference):** collect the reference (`image-dir:`, `route:` or `url:`), the routes to capture (write `WS/routes.txt`), and the dev command (use `$PORT`). Tell the user: the reference is one page, and it is compared with the first route in `routes.txt` only, so put the page to grade first; an `image-dir:` holds screenshots of that one page named `home-<desktop|phone>-<light|dark>.png`. Write `WS/rubric.md` with the user: 3–6 criteria, each with anchors for 1, 3 and 5; criterion names must not contain ":" (the scorer output parser splits on the first ": "). Anchors describe qualities (alignment, hierarchy, contrast, spacing, readability on phone), never "same as the reference": the reference is a quality target, not content to copy. Write `WS/graded.md` in the `graded.md` format defined in `gauntlet-review`'s section 1 (keys `dev`, `routes`, `reference`, `rubric`, `margin`, `floor`, `min`) (margin 0.3, floor 3.5, min 3 unless the user changes them). `S set graded WS/graded.md`. Add `Bash(npx --yes playwright*)` and the dev command to the permission rules.
+5. **Exit pair (optional):** if the user wants whole-feature proof, collect `--prove`, `--reset`, `--env-file`, `--db-pattern`; run `bash "$SKILL_DIR/../v3-review/scripts/exit-pair.sh" --check <flags>`. Refused → explain why, then drop it or let the user fix the env file. `S set exit_pair "<flags>"` or `S set exit_pair none`.
+5b. **Graded bar (optional, for UI or anything with a reference):** collect the reference (`image-dir:`, `route:` or `url:`), the routes to capture (write `WS/routes.txt`), and the dev command (use `$PORT`). Tell the user: the reference is one page, and it is compared with the first route in `routes.txt` only, so put the page to grade first; an `image-dir:` holds screenshots of that one page named `home-<desktop|phone>-<light|dark>.png`. Write `WS/rubric.md` with the user: 3–6 criteria, each with anchors for 1, 3 and 5; criterion names must not contain ":" (the scorer output parser splits on the first ": "). Anchors describe qualities (alignment, hierarchy, contrast, spacing, readability on phone), never "same as the reference": the reference is a quality target, not content to copy. Write `WS/graded.md` in the `graded.md` format defined in `v3-review`'s section 1 (keys `dev`, `routes`, `reference`, `rubric`, `margin`, `floor`, `min`) (margin 0.3, floor 3.5, min 3 unless the user changes them). `S set graded WS/graded.md`. Add `Bash(npx --yes playwright*)` and the dev command to the permission rules.
 6. **Permissions:** print the allow rules this run needs, for the user to add to the project's `.claude/settings.local.json` (never edit settings yourself). Paths under the home directory are written with `~/`; any other absolute path needs a leading `//`.
-   - `Read(~/.patrick-workflows/**)`, `Edit(~/.patrick-workflows/**)`
+   - `Read(~/.v3-gauntlet/**)`, `Edit(~/.v3-gauntlet/**)`
    - `Bash(bash *skills/*/scripts/*)`
    - each gate command, e.g. `Bash(npm test*)`
    - `Bash(git add*)`, `Bash(git commit*)`, `Bash(git diff*)`, `Bash(git log*)`, `Bash(git status*)`, `Bash(git switch*)`, `Bash(git rev-parse*)`
    - with `parallel: on`: `Bash(git reset*)`, `Bash(git cherry-pick*)`, `Bash(git worktree*)`, `Bash(git branch*)`
-   - for `/start` CLOSE (used after the merge): `Bash(git worktree*)`, `Bash(git branch*)`, `Bash(git pull*)`, `Bash(gh pr view*)`, `Bash(gh issue view*)`, `Bash(gh issue close*)`
+   - for `/v3-ticket` CLOSE (used after the merge): `Bash(git worktree*)`, `Bash(git branch*)`, `Bash(git pull*)`, `Bash(gh pr view*)`, `Bash(gh issue view*)`, `Bash(gh issue close*)`
 7. **Rulings:** record every decision made in this stage in `WS/rulings.md` with `source: user`.
 
 Ask for one approval of the brief. On approval:
-1. `bash "$SKILL_DIR/../gauntlet-review/scripts/workspace.sh" --at "<WS>/gauntlet-review"`, then run every gate once as `bash "$SKILL_DIR/../gauntlet-review/scripts/run-gate.sh" preflight-<name> <timeout> -- "<command>"`. If a permission prompt appeared, ask the user to add the rule now and rerun the gate.
-2. `S phase approved`, then invoke `patrick-workflows:ticket-build` immediately. Do not wait for another command.
+1. `bash "$SKILL_DIR/../v3-review/scripts/workspace.sh" --at "<WS>/v3-review"`, then run every gate once as `bash "$SKILL_DIR/../v3-review/scripts/run-gate.sh" preflight-<name> <timeout> -- "<command>"`. If a permission prompt appeared, ask the user to add the rule now and rerun the gate.
+2. `S phase approved`, then invoke `v3-gauntlet:ticket-build` immediately. Do not wait for another command.

@@ -1,12 +1,12 @@
 {
-  "name": "patrick-workflows",
-  "description": "Personal, portable Claude Code workflows.",
+  "name": "v3-gauntlet",
+  "description": "Unattended ticket pipeline for Claude Code: plan with you, build and review on its own, ship on your say-so.",
   "owner": { "name": "John Patrick Ryan Mandal" },
   "plugins": [
     {
-      "name": "patrick-workflows",
+      "name": "v3-gauntlet",
       "source": "./",
-      "description": "Personal, portable Claude Code workflows."
+      "description": "Unattended ticket pipeline for Claude Code: plan with you, build and review on its own, ship on your say-so."
     }
   ]
 }

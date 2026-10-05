@@ -1,6 +1,6 @@
 ---
 name: ticket-workspace
-description: Reference for the /start pipeline - workspace layout, state keys, phase machine, ruling and finding formats, and the shared scripts. Read by every ticket stage skill; use when any /start stage starts.
+description: Reference for the /v3-ticket pipeline - workspace layout, state keys, phase machine, ruling and finding formats, and the shared scripts. Read by every ticket stage skill; use when any /v3-ticket stage starts.
 ---
 
 # Ticket workspace
@@ -8,7 +8,7 @@ description: Reference for the /start pipeline - workspace layout, state keys, p
 `SKILL_DIR` is this skill's base directory; its scripts run as `bash "$SKILL_DIR/scripts/<name>.sh"`. Stage skills call them as `bash "$SKILL_DIR/../ticket-workspace/scripts/<name>.sh"`.
 
 ## Location
-`bash "$SKILL_DIR/scripts/ticket-ws.sh" path <id>` → `~/.patrick-workflows/tickets/<repo>/<id>/` (`TICKETS_HOME` overrides the root). The same path from every worktree of the repo. Never inside the project, never under `~/.claude/` (Claude Code refuses writes there).
+`bash "$SKILL_DIR/scripts/ticket-ws.sh" path <id>` → `~/.v3-gauntlet/tickets/<repo>/<id>/` (`TICKETS_HOME` overrides the root). The same path from every worktree of the repo. Never inside the project, never under `~/.claude/` (Claude Code refuses writes there).
 
 ## Layout
 ```
@@ -22,7 +22,7 @@ scope.txt       allow:/forbid: lines for scope-check.sh
 ledger.md       one line per completed step; state.sh appends phase changes
 baseline.md     gate results on the base commit
 briefs/task-N.md, reports/task-N.md
-gauntlet-review/    the review loop's own workspace (state, logs, rounds, report.md)
+v3-review/    the review loop's own workspace (state, logs, rounds, report.md)
 handoff.md      the SHIP report; pr-body.md the draft PR body
 ```
 
@@ -40,10 +40,10 @@ ready | blocked → handoff → round2 → implementing ...      handoff → pr 
 ```
 | Phase | Stage skill |
 |---|---|
-| none, intake, designed, planned | `patrick-workflows:ticket-plan` |
-| approved, round2, implementing, reviewing, fixing | `patrick-workflows:ticket-build` |
-| ready, blocked, handoff | `patrick-workflows:ticket-ship` |
-| pr | `patrick-workflows:ticket-close` |
+| none, intake, designed, planned | `v3-gauntlet:ticket-plan` |
+| approved, round2, implementing, reviewing, fixing | `v3-gauntlet:ticket-build` |
+| ready, blocked, handoff | `v3-gauntlet:ticket-ship` |
+| pr | `v3-gauntlet:ticket-close` |
 | closed | nothing left to do |
 
 ## Worktrees
@@ -55,7 +55,7 @@ Ruling (`rulings.md`):
 R3 — <title> (source: user | orchestrator)
 Decision: ... / Why: ... / Cost if wrong: ... / Applies to: all | task N
 ```
-Finding: the format in `patrick-workflows:final-reviewer` (ID, Severity, Kind, Location, Trigger, Expected, Actual).
+Finding: the format in `v3-gauntlet:final-reviewer` (ID, Severity, Kind, Location, Trigger, Expected, Actual).
 Ledger line: `<UTC time> <step> <result>`. Ledger time: always `date -u +%Y-%m-%dT%H:%M:%SZ`.
 
 ## Scripts

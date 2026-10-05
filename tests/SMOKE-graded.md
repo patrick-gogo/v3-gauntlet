@@ -3,8 +3,8 @@
 # from the repo root; the target folder must not exist yet
 d=$(mktemp -d)/ui-site && bash tests/fixture/ui-setup.sh "$d" && cd "$d"
 claude -p --plugin-dir "<repo>" --permission-mode acceptEdits \
-  --allowedTools "Read(~/.patrick-workflows/**)" "Edit(~/.patrick-workflows/**)" "Bash(bash *)" "Bash(git *)" "Bash(node *)" "Bash(npx --yes playwright*)" "Bash(curl *)" "Skill" "Agent" "Read" "Grep" "Glob" "Write" "Edit" \
-  -- "/patrick-workflows:gauntlet-review main --graded graded.md --depth standard" < /dev/null
+  --allowedTools "Read(~/.v3-gauntlet/**)" "Edit(~/.v3-gauntlet/**)" "Bash(bash *)" "Bash(git *)" "Bash(node *)" "Bash(npx --yes playwright*)" "Bash(curl *)" "Skill" "Agent" "Read" "Grep" "Glob" "Write" "Edit" \
+  -- "/v3-gauntlet:v3-review main --graded graded.md --depth standard" < /dev/null
 ```
 
 - [ ] Dev server started and stopped (no `node server.js` left running: `pgrep -f "node server.js"` is empty).

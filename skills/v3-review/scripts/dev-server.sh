@@ -10,9 +10,9 @@
 set -u
 ws=${REVIEW_WS:-}
 if [ -z "$ws" ]; then
-  ptr=$(git rev-parse --git-path patrick-workflows-review-ws 2>/dev/null) && [ -f "$ptr" ] && ws=$(head -n 1 "$ptr")
+  ptr=$(git rev-parse --git-path v3-gauntlet-review-ws 2>/dev/null) && [ -f "$ptr" ] && ws=$(head -n 1 "$ptr")
   if [ -z "$ws" ]; then   # a linked worktree: the pointer lives in the main git dir
-    ptr="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/patrick-workflows-review-ws"
+    ptr="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/v3-gauntlet-review-ws"
     [ -f "$ptr" ] && ws=$(head -n 1 "$ptr")
   fi
 fi

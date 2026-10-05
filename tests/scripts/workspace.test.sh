@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 . "$ROOT/tests/lib/assert.sh"
-WS="$ROOT/skills/gauntlet-review/scripts/workspace.sh"
+WS="$ROOT/skills/v3-review/scripts/workspace.sh"
 tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
 export TICKETS_HOME="$tmp/tickets home"
 
@@ -13,10 +13,10 @@ out=$(bash "$WS"); code=$?
 assert_eq 0 "$code" "exits 0 in a repo"
 case "$out" in "$TICKETS_HOME/My-Repo/_reviews/feat-abc-1-"*) _ok ;; *) _ko "path shape: $out" ;; esac
 [ -d "$out/logs" ] && _ok || _ko "logs dir created"
-ptr=$(git rev-parse --git-path patrick-workflows-review-ws)
+ptr=$(git rev-parse --git-path v3-gauntlet-review-ws)
 assert_eq "$out" "$(cat "$ptr")" "pointer file records the workspace"
 out=$(TICKETS_HOME= HOME="$tmp/home" bash "$WS")
-case "$out" in "$tmp/home/.patrick-workflows/tickets/"*) _ok ;; *) _ko "default root outside ~/.claude: $out" ;; esac
+case "$out" in "$tmp/home/.v3-gauntlet/tickets/"*) _ok ;; *) _ko "default root outside ~/.claude: $out" ;; esac
 
 git remote add origin "git@github.com:me/shop-app.git"
 out=$(bash "$WS")
@@ -32,7 +32,7 @@ a=$(bash "$WS"); b=$(bash "$WS")
 at="$tmp/given ws"
 out=$(bash "$WS" --at "$at"); assert_eq "$at" "$out" "--at prints the given dir"
 [ -d "$at/logs" ] && _ok || _ko "--at creates logs"
-assert_eq "$at" "$(cat "$(git rev-parse --git-path patrick-workflows-review-ws)")" "--at updates the pointer"
+assert_eq "$at" "$(cat "$(git rev-parse --git-path v3-gauntlet-review-ws)")" "--at updates the pointer"
 
 cd "$tmp" || exit 1
 bash "$WS" >/dev/null 2>&1; code=$?
