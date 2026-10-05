@@ -15,7 +15,12 @@ Read `v3-gauntlet:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-wor
 - Resume: after a crash or `/clear`, read `state.md`, `ledger.md` and `git log`; a task with a `task N complete` ledger line is done.
 
 ## 0. Every entry, including resumes
-`git branch --show-current` must equal `branch`. If it does not and the tree is clean, `git switch <branch>`; when the branch does not exist yet (PLAN only records its name), create it from the recorded base: `git switch -c <branch> <base>`. If the tree is dirty, stop and tell the user (another branch has uncommitted work). Never commit on any other branch.
+**Where to work.** Read `checkout` from state.
+- `worktree` (the default; the worktree does not exist yet): once, add `.claude/worktrees/` to `$(git rev-parse --git-common-dir)/info/exclude` if it is not there. Call the `EnterWorktree` tool with `name` = the ticket ID (it creates the worktree under `.claude/worktrees/` and moves the session into it). There, `git switch <branch>` if the branch exists, else `git switch -c <branch> <base>`. Then `S set checkout "<the worktree path>"` (`git rev-parse --show-toplevel`).
+- A path: enter it as the Worktrees rule in `v3-gauntlet:ticket-workspace` says (`EnterWorktree` with `path`).
+- `main`: work in the main checkout. This is the only case where BUILD switches branches there.
+
+Then check the branch: `git branch --show-current` must equal `branch`. If it does not and the tree is clean, `git switch <branch>`; when the branch does not exist yet (PLAN only records its name), create it from the recorded base: `git switch -c <branch> <base>`. If the tree is dirty, stop and tell the user (another branch has uncommitted work). Never commit on any other branch.
 
 ## 1. Pre-flight (skip if `preflight` is `done`)
 1. Phase must be `approved` or `round2`; HEAD on `branch`; tree clean.

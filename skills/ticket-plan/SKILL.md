@@ -31,7 +31,7 @@ Extract them into `WS/bar.md` as `AC1`, `AC2`, ... followed by a `Deferred:` lin
 ## 4. Branch name and base (recorded, not created)
 1. Type: `fix` for a bug ticket, else `feat`. Unclear → ruling. `S set type <feat|fix>`.
 2. Name: `BR=$(bash "$SKILL_DIR/../ticket-workspace/scripts/branch-name.sh" [--prefix <p>] [--keep-id-case] <type> <id> <title>)`, with `--prefix` from `CFG`'s `branch_prefix.<type>` and `--keep-id-case` when `CFG` says `branch_keep_id_case: yes`. `S set branch <BR>`.
-3. Base: `CFG`'s `base_branch`, else the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD` minus `origin/`; else local `main`). If a remote exists, `git fetch origin <base> -q`; `S set base $(git rev-parse origin/<base>)` (or `<base>` with no remote), `S set base_branch <base>`, `S set pr_target <base>`, `S set checkout main`.
+3. Base: `CFG`'s `base_branch`, else the default branch (`git symbolic-ref --short refs/remotes/origin/HEAD` minus `origin/`; else local `main`). If a remote exists, `git fetch origin <base> -q`; `S set base $(git rev-parse origin/<base>)` (or `<base>` with no remote), `S set base_branch <base>`, `S set pr_target <base>`, `S set checkout <CFG checkout, default worktree>` (`worktree` until BUILD creates it; `main` only when the config says so).
 
 ## 5. Context and design
 1. **Code context:** if `CFG` names a `context_agent`, dispatch it (read-only) with the ticket and ask how the touched code works today, what depends on it, sibling features, existing tests and open PRs on the same files. Save its answer to `WS/context.md`. Otherwise read the relevant code yourself and write `WS/context.md` the same way.
