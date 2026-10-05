@@ -11,6 +11,9 @@ long=$(bash "$BN" feat ABC-1 "a very long title that keeps going and going well 
 [ ${#long} -le 60 ] && _ok || _ko "length capped: ${#long}"
 case "$long" in *-) _ko "trailing dash: $long" ;; *) _ok ;; esac
 git check-ref-format --branch "$long" >/dev/null && _ok || _ko "valid ref: $long"
+assert_eq "bugfix/V3-2451-cart-total-wrong" "$(bash "$BN" --prefix bugfix --keep-id-case fix V3-2451 "Cart total wrong")" "prefix and key case from project config"
+assert_eq "feature/abc-7-x" "$(bash "$BN" --prefix feature feat ABC-7 "x")" "prefix alone still lowercases the key"
+bash "$BN" --prefix "bad prefix" fix ABC-1 "x" >/dev/null 2>&1; assert_eq 2 $? "prefix that is not a valid ref part is refused"
 bash "$BN" wip ABC-1 "x" >/dev/null 2>&1; assert_eq 2 $? "unknown type rejected"
 bash "$BN" feat "#" "x" >/dev/null 2>&1; assert_eq 2 $? "ID that slugs to nothing is refused"
 bash "$BN" feat "票据" "x" >/dev/null 2>&1; assert_eq 2 $? "non-Latin ID is refused"
