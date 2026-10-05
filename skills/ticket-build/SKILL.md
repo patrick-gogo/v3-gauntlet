@@ -15,7 +15,7 @@ Read `v3-gauntlet:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-wor
 - Resume: after a crash or `/clear`, read `state.md`, `ledger.md` and `git log`; a task with a `task N complete` ledger line is done.
 
 ## 0. Every entry, including resumes
-`git branch --show-current` must equal `branch`. If it does not and the tree is clean, `git switch <branch>`; if the tree is dirty, stop and tell the user (another branch has uncommitted work). Never commit on any other branch.
+`git branch --show-current` must equal `branch`. If it does not and the tree is clean, `git switch <branch>`; when the branch does not exist yet (PLAN only records its name), create it from the recorded base: `git switch -c <branch> <base>`. If the tree is dirty, stop and tell the user (another branch has uncommitted work). Never commit on any other branch.
 
 ## 1. Pre-flight (skip if `preflight` is `done`)
 1. Phase must be `approved` or `round2`; HEAD on `branch`; tree clean.

@@ -13,8 +13,9 @@ description: Reference for the /v3-ticket pipeline - workspace layout, state key
 ## Layout
 ```
 state.md        machine-readable "key: value" lines (below); change only via state.sh
-ticket.md       ticket text verbatim
+ticket.md       ticket text verbatim (+ "## English translation" when it was in another language)
 bar.md          acceptance criteria AC1..ACn, plus a "Deferred:" list
+context.md      how the touched code works today (PLAN step 5)
 design.md       approved design
 plan.md         approved plan (round 2 appends tasks under "## Round 2")
 rulings.md      binding rulings
@@ -38,10 +39,13 @@ intake → designed → planned → approved → implementing → reviewing ⇄ 
 implementing | reviewing | fixing → blocked
 ready | blocked → handoff → round2 → implementing ...      handoff → pr → closed
 ```
+`approved` is **Planned** on the queue board: the plan and its rulings are approved and the ticket waits to be queued. PLAN never moves past it; BUILD starts from it only when asked (`/v3-ticket <id> build`) or when a lap picks the ticket up.
+
 | Phase | Stage skill |
 |---|---|
 | none, intake, designed, planned | `v3-gauntlet:ticket-plan` |
-| approved, round2, implementing, reviewing, fixing | `v3-gauntlet:ticket-build` |
+| approved | waiting in the queue; `v3-gauntlet:ticket-build` only with `build` |
+| round2, implementing, reviewing, fixing | `v3-gauntlet:ticket-build` |
 | ready, blocked, handoff | `v3-gauntlet:ticket-ship` |
 | pr | `v3-gauntlet:ticket-close` |
 | closed | nothing left to do |
@@ -49,12 +53,42 @@ ready | blocked → handoff → round2 → implementing ...      handoff → pr 
 ## Worktrees
 If `checkout` is a worktree path and the session is not inside it, call the `EnterWorktree` tool with `path` set to it before running any stage. A worktree created with plain `git worktree add` outside the repo is not writable from the session.
 
+## Project config
+A work project may hold `.claude/v3-gauntlet.md` (keep it out of git: it can hold project details). Every key is optional; without the file the stages use their generic behaviour.
+```
+queue: notion | none              PLAN adds the ticket to the queue board when it reaches Planned
+repo_label: <name>                value for the board's Repo column
+base_branch: <branch>             default: the remote's default branch
+branch_prefix.fix: <prefix>       e.g. bugfix (default: the type, fix)
+branch_prefix.feat: <prefix>      e.g. feature (default: feat)
+branch_keep_id_case: yes | no     keep V3-12 instead of v3-12 in branch names
+translate: yes | no               add an English translation to ticket.md (default yes)
+context_agent: <agent name>       read-only agent PLAN asks about the touched code
+
+## Intake
+<how to read a ticket: which tool, which site; free text>
+
+## Gates
+<name>: <command>
+```
+The queue's token is never in this file: `notion-queue.mjs` reads `NOTION_TOKEN` and `GAUNTLET_QUEUE_DB` from the environment or `~/.config/v3-gauntlet/notion.env`.
+
+## Rulings
+Every decision a stage makes on its own is a ruling. Nothing waits for the user: the stage takes its recommendation and the user reviews the rulings in a batch (PLAN step 8; the handoff after BUILD).
+
+Levels:
+- **T1**: an obvious technical choice with a clear best answer (a helper's name, which existing component to reuse, a test layout).
+- **T2**: a choice the product owner would make (required or optional, a length limit, a default value, wording shown to users).
+- **T3**: a business decision (a new feature, a changed rule, money, tax, anything legal).
+- Unsure between two levels: take the higher one.
+
 ## Formats
 Ruling (`rulings.md`):
 ```
-R3 — <title> (source: user | orchestrator)
-Decision: ... / Why: ... / Cost if wrong: ... / Applies to: all | task N
+R3 — <title> (source: planner | orchestrator | user, level: T1 | T2 | T3)
+Decision: ... / Why: ... / Alternative: ... / Cost if wrong: low | medium | high / Applies to: all | task N
 ```
+`source: user` means the user kept or changed it in a batch. A `## Batch <k>` section in `rulings.md` lists which rulings batch k asked about, numbered from 1, each with its `R` number.
 Finding: the format in `v3-gauntlet:final-reviewer` (ID, Severity, Kind, Location, Trigger, Expected, Actual).
 Ledger line: `<UTC time> <step> <result>`. Ledger time: always `date -u +%Y-%m-%dT%H:%M:%SZ`.
 
@@ -63,7 +97,9 @@ Ledger line: `<UTC time> <step> <result>`. Ledger time: always `date -u +%Y-%m-%
 |---|---|
 | `state.sh <state.md> get/set/incr/phase ...` | state and phases |
 | `ticket-ws.sh path/init/list` | workspace location |
-| `branch-name.sh <type> <id> <title...>` | branch name |
+| `branch-name.sh [--prefix p] [--keep-id-case] <type> <id> <title...>` | branch name |
+| `ruling-reply.sh <n> "<reply>"` | parse a batch reply into `<k> keep` / `<k> change <text>` lines; exit 2 names what is missing or unclear |
+| `node notion-queue.mjs check / list [--status S] / upsert --key K --title T [...] / status --key K --status S [...]` | the queue board (exit 1 key not in queue, 2 bad input, 3 could-not-run) |
 | `waves.sh <plan.md>` | parallel waves from `Files:` and `Depends on:` |
 | `pr-state.sh <pr>` | merged / open / closed-unmerged / could-not-run |
 | `pr-state.sh --head-matches <pr> <branch>` | same / differs / could-not-run: local branch tip vs the PR head |
