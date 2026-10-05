@@ -57,11 +57,18 @@ Each item is a ruling unless it follows mechanically from the rule given.
    Plan: <tasks_total> tasks, depth <depth>, waves <summary>, gates <names>
    AC: AC1 ..., AC2 ...                     (one line each)
 
-   Rulings (reply e.g. "1 keep 2 change: <what> 3 keep", or "all keep")
-   1. [T2] <decision> | why: <one line> | alt: <the main alternative> | cost if wrong: <low|medium|high>
-   2. [T1] ...
+   Rulings (reply e.g. "1-3 keep 4 change: <what> 5 keep", or "all keep")
+   **1. <short title>** · T2
+   - **Question:** <the decision>
+   - **Pick:** <your decision>
+   - **Why:** <one line> (alt: <the main alternative>; cost if wrong: <low|medium|high>)
+
+   **2. <short title>** · T1
+   - ...
+
+   To accept every pick: all keep
    ```
-   Put T3 and T2 rulings first, then T1. Keep each to one or two lines. Give the workspace path for the full plan and design.
+   One block per ruling, each field on its own line. Put T3 and T2 rulings first, then T1. Keep each field to one or two lines. Give the workspace path for the full plan and design.
 2. Parse the answer with `bash "$SKILL_DIR/../ticket-workspace/scripts/ruling-reply.sh" <n> "<reply>"`. Exit 2 → show its message and ask again (only the unanswered or unclear numbers).
 3. For each `keep`: set that ruling's `source: user`. For each `change <text>`: update the ruling (`Decision` per the user's text, `source: user`), then apply it to whatever it governs (`bar.md`, `design.md`, `plan.md`, `scope.txt`, state keys). A change that alters tasks re-dispatches the planner with the updated rulings; then repeat step 7 for anything the new plan affects. With `queue: notion`, once the answers are recorded, repeat the `Rulings` page call from 8.1 so the page shows `source: user`.
 4. If any answer was `change`, start a new batch containing only the rulings that changed and any new ones the changes produced, and go back to 8.1. When a batch comes back all `keep`, go on.

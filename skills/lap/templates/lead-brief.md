@@ -5,6 +5,7 @@ Read `docs/gauntlet/RULES.md` first. You are the lead: plan the lap, run helpers
 - Lap: `{lap}`, packed {packed_at} on the laptop.
 - Clean base: `{base}` ({base_branch} at packing time). It must equal `git rev-parse HEAD^`.
 - Stop time: do not start a new ticket after {stop_time} ({timezone}). This is a date and time, not a daily time.
+- Commit identity: {git_name} <{git_email}>. Set it in every worktree before the first commit.
 - Parallel tickets: {parallel}. When off, build one ticket at a time in the order below.
 
 ## Tickets (in order)

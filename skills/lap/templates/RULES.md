@@ -18,17 +18,21 @@ You are running **unattended**. Nobody will answer a question until morning. The
 10. **Never print secrets** (tokens, passwords, env values) into logs, commits or the handoff.
 11. **Ledger:** one line per completed step in `docs/gauntlet/<lap>/ledger.md`: `<UTC time> <step> <result>` with the time from `date -u +%Y-%m-%dT%H:%M:%SZ`.
 12. **Evidence over claims.** Never trust a helper's "tests pass": re-run the gates yourself and cite the log file.
+13. **No tool attribution, ever.** No co-author trailers, no "Generated with" lines, in any commit, by you or any helper. Never ask a helper to add one.
 
 ## 2. Stages
 Lap = GO to handoff. Round = building to the exit pair. Wave = every ready branch merged and deployed once. Run = one pass of the gates and the browser checks. Exit pair = two green runs in a row on the same build.
 
 ### 2.1 GO
-Read the lead brief and every ticket folder. Check `BASE` (rail 3). Note the stop time. Ledger `go`.
+Read the lead brief and every ticket folder. Check `BASE` (rail 3). Note the stop time.
+- Set the commit identity from the brief in every worktree you make: `git -C <worktree> config user.name "<git_name>"` and `user.email "<git_email>"`.
+- Some project tools compare against `origin/<base_branch>`; there is no remote here, so create it: `git update-ref refs/remotes/origin/<base_branch> $BASE`. Delete it at cleanup (`git update-ref -d refs/remotes/origin/<base_branch>`).
+- Ledger `go`.
 
 ### 2.2 Freeze the base and bring the stack up
 1. Make a clean worktree at `BASE` for the stack: `git worktree add /tmp/lap-base $BASE`. Never run the stack from the snapshot.
 2. Bring the stack up as the project's **Stack** section says. Ledger the time it took.
-3. **Baseline:** run every gate from the **Gates** section on `BASE` (replace `{base}` with `BASE`). Save each log as `docs/gauntlet/<lap>/logs/baseline-<gate>.log`. A failing gate is a **known red**: list the names of its failing tests in `docs/gauntlet/<lap>/baseline.md`. Later, a gate counts as a **new red** only if it fails a test the baseline did not.
+3. **Baseline:** run every gate in the **Gates** section, browser checks included, on `BASE` (replace `{base}` with `BASE`). Save each log as `docs/gauntlet/<lap>/logs/baseline-<gate>.log`. A failing gate is a **known red**: list the names of its failing tests in `docs/gauntlet/<lap>/baseline.md`. Later, a gate counts as a **new red** only if it fails a test the baseline did not.
 
 ### 2.3 Build (per ticket, in the brief's order; tickets may run in parallel only when the brief says so)
 For each ticket: `git worktree add /tmp/lap-<id> -b devbox/<lap>/<branch> $BASE`. Then for each task in its `plan.md`, in order:
@@ -65,7 +69,7 @@ Classify each red: **product** (a ticket's code is wrong) → back to 2.3 for th
 Two green runs in a row on the same build end the round. Green = no new reds against the baseline and every browser check passing. If the stop time arrives first, record how far you got.
 
 ### 2.9 Handoff
-Write `docs/gauntlet/<lap>-handoff.md` (format in section 8) and commit it, the ledger, `baseline.md` and the logs on **this job's own branch** (never on a ticket branch). Run `docker compose down` (no `-v`) and remove the `/tmp` worktrees, keeping the branches. Your final summary to the board: one line per ticket with its status, then "handoff: docs/gauntlet/<lap>-handoff.md".
+Write `docs/gauntlet/<lap>-handoff.md` (format in section 8) and commit it, the ledger, `baseline.md` and the logs on **this job's own branch** (never on a ticket branch). Run `docker compose down` (no `-v`), remove the `/tmp` worktrees and the `origin/<base_branch>` ref (`git update-ref -d refs/remotes/origin/<base_branch>`), keeping the branches. Your final summary to the board: one line per ticket with its status, then "handoff: docs/gauntlet/<lap>-handoff.md".
 
 ## 3. Round 2 (a follow-up from the owner)
 The owner answers through Follow-up in the same session. Each answer that asks for a change becomes new tasks on that ticket's branch (test-first), then 2.4 to 2.9 again, writing `docs/gauntlet/<lap>-handoff-r2.md`. "push" is not for you: tell the owner the branches are ready for push day on the laptop.
@@ -95,11 +99,18 @@ Location: file:line / Trigger: concrete input or action / Expected: ... / Actual
 ```
 # Lap <lap> handoff
 
-## 0. Questions (answer e.g. "1 keep 2 change: <what> 3 yes")
-1. [T2, <id>] <the ruling or question> | pick: <your recommendation> | why: <one line>
+## 0. Questions (answer e.g. "1-3 keep 4 change: <what> 5 yes")
+**1. <short title>** · <T2 | T3 | follow-up | decision> (<id>)
+- **Question:** <the ruling or question>
+- **Pick:** <your recommendation>
+- **Why:** <one line>
+
+**2. <short title>** · ...
 ...
 (every T2/T3 ruling, every open Critical/Important, every blocker; the last one is always
- "Ready tickets go to push day? (yes / no)")
+ "Ready tickets go to push day?", pick yes or no)
+
+To accept every pick: <the reply, e.g. "1-4 keep 5 yes">
 
 ## 1. Tickets
 | Ticket | Status | Branch | Commits | Review | Exit pair |
