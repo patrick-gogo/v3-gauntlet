@@ -28,6 +28,10 @@ assert_contains "$(cat "$tmp/ticket ws/ledger.md")" "phase handoff -> pr" "ledge
 
 g="$tmp/other.md"; bash "$ST" "$g" phase approved 2>/dev/null; assert_eq 2 $? "none -> approved refused"
 
+# A ticket a lap built on the devbox goes from Planned straight to pr on push day.
+h="$tmp/lap/state.md"; for p in intake designed planned approved pr; do bash "$ST" "$h" phase "$p" || _ko "lap walk: $p refused"; done
+assert_eq pr "$(bash "$ST" "$h" get phase)" "approved -> pr is legal (lap push day)"
+
 bash "$ST" "$f" set exit_pair "--db-pattern 'test\.db\$'"
 bash "$ST" "$f" set exit_pair "--db-pattern 'app\.db\$'"
 assert_eq "--db-pattern 'app\.db\$'" "$(bash "$ST" "$f" get exit_pair)" "backslashes survive an overwrite"
