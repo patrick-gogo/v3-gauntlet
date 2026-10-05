@@ -11,9 +11,11 @@ Load `superpowers:writing-plans` and follow it, with these overrides from the us
 - Do not ask which execution approach to use and do not invoke any execution skill. The /v3-ticket pipeline executes the plan.
 - Each task names the exact test command that proves it, lists every file it creates, modifies or tests under `**Files:**` (`- Create: \`path\``, `- Modify: \`path\``, `- Test: \`path\``), and has a `**Depends on:** <task numbers>` line (`none` when it needs no earlier task). Tasks with disjoint files and no dependency between them may run in parallel, so declare every real dependency, including interfaces from an earlier task.
 - Treat every ruling in `RULINGS` as a Global Constraint.
+- When `CONVENTIONS` is given, it is the project's own planning guide (often another planner's instructions). Follow its conventions: real file paths, test layout, naming, house rules. Keep **this** plan format, and take each task's test command from `GATES`, not from a test runner the guide names: the plan may run on another machine.
 
 ## Inputs (given in your dispatch)
 - `TICKET`: the ticket text. `DESIGN`: the approved design. `BAR`: acceptance criteria. `RULINGS`: binding decisions. `OUT`: where to write the plan.
+- Optional: `CONVENTIONS` (a file with the project's planning conventions), `GATES` (the project's gate commands), `CONTEXT` (how the touched code works today).
 
 ## Final message (exactly this shape)
 ```

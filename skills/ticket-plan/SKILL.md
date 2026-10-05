@@ -34,7 +34,7 @@ Extract them into `WS/bar.md` as `AC1`, `AC2`, ... followed by a `Deferred:` lin
 2. **Design:** invoke `superpowers:brainstorming` with these overrides from the user, which outrank the skill: this runs **unattended**. Wherever the skill would ask the user a question, answer it yourself with the option you would recommend and record a ruling instead. Do not offer the visual companion. Save the design to `WS/design.md` (not `docs/`), do not commit it, and do not invoke writing-plans: return here. `S phase designed`.
 
 ## 6. Plan
-Dispatch `v3-gauntlet:ticket-planner` (model opus) with `TICKET=WS/ticket.md`, `DESIGN=WS/design.md`, `BAR=WS/bar.md`, `RULINGS=WS/rulings.md` and `OUT=WS/plan.md`. If it could not save the plan, run `superpowers:writing-plans` here with the same overrides. Do not show the plan for approval yet. `S set tasks_total <n>`, `S set tasks_done 0`, `S set round2 no`, `S phase planned`.
+Dispatch `v3-gauntlet:ticket-planner` (model opus) with `TICKET=WS/ticket.md`, `DESIGN=WS/design.md`, `BAR=WS/bar.md`, `RULINGS=WS/rulings.md`, `CONTEXT=WS/context.md` and `OUT=WS/plan.md`. When `CFG` has a `## Gates` section, pass it as `GATES`. When `CFG` names a `planner_agent`, pass that agent's definition file as `CONVENTIONS` (`.claude/agents/<name>.md` in the project, else `~/.claude/agents/<name>.md`): its conventions apply, the plan format and test commands stay the plugin's. If it could not save the plan, run `superpowers:writing-plans` here with the same overrides. Do not show the plan for approval yet. `S set tasks_total <n>`, `S set tasks_done 0`, `S set round2 no`, `S phase planned`.
 
 ## 7. Autonomy brief (all decided by you)
 Each item is a ruling unless it follows mechanically from the rule given.
