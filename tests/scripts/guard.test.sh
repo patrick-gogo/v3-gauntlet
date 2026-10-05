@@ -109,4 +109,24 @@ hook "$R" "$(printf '\tgit push')"; assert_eq 2 "$code" "tab before git detected
 hook "$tmp/plain" "git -C \"$R\" push"; assert_eq 2 "$code" "quoted git -C path is the repo checked"
 hook "$tmp/plain" "cd \"$R\" && git push"; assert_eq 2 "$code" "cd X && uses X for ticket lookup"
 hook "$tmp/plain" "git commit -m \"docs: explain why $CO: Claude trailers are blocked\""; assert_eq 0 "$code" "mentioning the trailer mid-line is allowed"
+# Push from a temporary worktree (-C "<path with a space>"): attached, and detached with a refspec.
+rm -rf "$TICKETS_HOME/demo/T-2"
+git -C "$R" switch -q main
+ticket T-1 handoff feat/t-1
+git -C "$R" worktree add -q "$tmp/push wt" feat/t-1
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin feat/t-1"; assert_eq 2 "$code" "attached worktree push blocked when not approved"
+ticket T-1 handoff feat/t-1 'push_approved: yes
+'
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin feat/t-1"; assert_eq 0 "$code" "attached worktree push allowed when approved"
+git -C "$R" worktree remove --force "$tmp/push wt"
+git -C "$R" worktree add -q --detach "$tmp/push wt" feat/t-1
+ticket T-1 handoff feat/t-1
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin HEAD:feat/t-1"; assert_eq 2 "$code" "detached push HEAD:branch blocked when not approved"
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin HEAD:refs/heads/feat/t-1"; assert_eq 2 "$code" "detached push to refs/heads/ blocked when not approved"
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin HEAD:other"; assert_eq 0 "$code" "detached push to another branch allowed"
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push"; assert_eq 0 "$code" "detached push with no refspec fails open"
+ticket T-1 handoff feat/t-1 'push_approved: yes
+'
+hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin HEAD:feat/t-1"; assert_eq 0 "$code" "detached push HEAD:branch allowed when approved"
+git -C "$R" worktree remove --force "$tmp/push wt"
 finish

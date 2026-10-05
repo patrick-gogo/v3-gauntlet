@@ -49,7 +49,7 @@ only reaches other machines after `version` is bumped in
 
 Run `/v3-ticket <id>` again at any time to resume where it stopped. If another plugin also defines `/v3-ticket` or `/v3-review`, use the namespaced form: `/v3-gauntlet:v3-ticket`, `/v3-gauntlet:v3-review`. Working files live in `~/.v3-gauntlet/tickets/<repo>/<id>/`. After the PR is merged, run `/v3-ticket <id>` once more: it marks the ticket done (a GitHub issue is closed by the URL recorded at intake, never by bare number) and cleans up. After a squash or rebase merge it deletes the local branch with `-D` only when the branch tip is exactly the commit GitHub merged; otherwise it keeps the branch and says why.
 
-**Project config.** A work project can keep its settings in `.claude/v3-gauntlet.md` (out of git): branch prefixes, how to read tickets, gates, the code-context agent, and `queue: notion`. The keys are listed in the `ticket-workspace` skill.
+**Project config.** A work project can keep its settings in `.claude/v3-gauntlet.md` (out of git): branch prefixes, how to read tickets, gates, the code-context agent, `queue: notion`, checkout strategy, and tracker integration. The keys are listed in the `ticket-workspace` skill.
 
 **Queue board (Notion).** With `queue: notion`, PLAN adds each Planned ticket to a Notion database with the columns `Ticket` (title), `Key`, `Status` (Inbox, Planned, Queued, Running, Needs you, Ready, PR open, Done), `Order`, `Repo`, `Branch`, `Report`, `Notes`. One-time setup:
 1. Create an internal integration at notion.so/my-integrations and copy its secret.
@@ -60,6 +60,12 @@ Run `/v3-ticket <id>` again at any time to resume where it stopped. If another p
    GAUNTLET_QUEUE_DB=<the database id from its URL>
    ```
 4. Check it: `node <plugin>/skills/ticket-workspace/scripts/notion-queue.mjs check` prints `NOTION: ok (<database title>)`.
+
+PLAN writes the tracker ticket (original and English translation) into the card body, and creates sub-pages for Design, Plan, and Rulings. When `/v3-lap result` brings a lap home, it adds a "Handoff <lap>" sub-page. Use `notion-queue.mjs page --key K --file <md> [--child "<Title>"]` to append markdown to a card and create sub-pages; the tool also converts the markdown to Notion blocks.
+
+**Tracker integration.** When the project config has a `## Tracker status` section, PLAN moves the user's own To Do ticket to In Progress at intake. This flags the ticket as work-in-progress in the tracker.
+
+**Checkout strategy.** By default, a local BUILD enters a worktree via the EnterWorktree tool, keeping your main checkout clean. Set `checkout: main` to work in the main checkout instead. On push day, the plugin never runs hooks in the main checkout: it pushes from a temporary worktree, or with `--no-verify` when `push_skip_hooks: yes` is set.
 
 The board never blocks PLAN: if Notion cannot be reached, PLAN says so and you add the card by hand.
 

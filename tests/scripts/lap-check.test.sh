@@ -41,4 +41,14 @@ assert_eq 1 "$code" "a branch with no commits fails"
 
 bash "$C" no-such-branch "$BASE" >/dev/null 2>&1; assert_eq 2 $? "an unknown branch is bad input"
 bash "$C" >/dev/null 2>&1; assert_eq 2 $? "usage"
+
+git switch -qc bugfix/T-6-author "$BASE"; echo e >> app.txt
+git -c user.name=devbox -c user.email=devbox@devbox.local commit -qam "fix(T-6): By the devbox"
+out=$(bash "$C" bugfix/T-6-author "$BASE" --author t@example.com 2>&1); code=$?
+assert_eq 1 "$code" "a commit by another author fails with --author"
+assert_contains "$out" "author devbox@devbox.local on" "names the wrong author"
+out=$(bash "$C" bugfix/T-1-good "$BASE" --author t@example.com); code=$?
+assert_eq 0 "$code" "the right author passes"
+out=$(bash "$C" bugfix/T-1-good "$BASE" --snapshot "$BASE" --author t@example.com 2>&1); code=$?
+assert_eq 1 "$code" "--snapshot and --author work together"
 finish

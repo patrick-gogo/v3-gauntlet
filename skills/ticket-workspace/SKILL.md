@@ -28,7 +28,7 @@ handoff.md      the SHIP report; pr-body.md the draft PR body
 ```
 
 ## State keys
-`ticket`, `title`, `phase`, `branch`, `base` (sha), `base_branch`, `checkout` (`main` or the worktree path), `depth` (`lite`|`standard`|`full`), `tasks_total`, `tasks_done`, `round2` (`no`|`yes`), `budget_impl_max`, `budget_impl_used`, `budget_review_max`, `gate.<name>` (command), `gate_timeout`, `exit_pair` (`none` or the exit-pair flags), `pr_target`, `pr_url`, `preflight` (`done`), `type` (`feat`|`fix`), `graded` (path to `graded.md`), `issue_url` (GitHub issue URL, set at intake; CLOSE closes the issue by it), `parallel` (`on`|`off`), `push_approved` (`yes` once the user approved the PR; SHIP sets it right before pushing).
+`ticket`, `title`, `phase`, `branch`, `base` (sha), `base_branch`, `checkout` (`worktree` until BUILD creates it, then the worktree path; `main` only when the config says so), `depth` (`lite`|`standard`|`full`), `tasks_total`, `tasks_done`, `round2` (`no`|`yes`), `budget_impl_max`, `budget_impl_used`, `budget_review_max`, `gate.<name>` (command), `gate_timeout`, `exit_pair` (`none` or the exit-pair flags), `pr_target`, `pr_url`, `preflight` (`done`), `type` (`feat`|`fix`), `graded` (path to `graded.md`), `issue_url` (GitHub issue URL, set at intake; CLOSE closes the issue by it), `parallel` (`on`|`off`), `card` (`done` once the queue card exists), `push_approved` (`yes` once the user approved the PR; SHIP sets it right before pushing).
 
 ## Phases
 `bash state.sh <WS>/state.md phase <new>` is the only way to change phase; it refuses illegal jumps and logs every change.
@@ -53,6 +53,10 @@ ready | blocked → handoff → round2 → implementing ...      handoff → pr 
 ## Worktrees
 If `checkout` is a worktree path and the session is not inside it, call the `EnterWorktree` tool with `path` set to it before running any stage. A worktree created with plain `git worktree add` outside the repo is not writable from the session.
 
+`checkout: worktree` (the default) means BUILD makes the ticket's worktree with `EnterWorktree` (see `v3-gauntlet:ticket-build` step 0), so local builds never switch branches in the main checkout, where another agent may be working. `checkout: main` opts out.
+
+Pushing never runs hooks in the main checkout (a project's pre-push hook may run a full build there). A push either skips hooks (`push_skip_hooks: yes`) or runs from a temporary worktree; `v3-gauntlet:ticket-ship` section 3 and `v3-gauntlet:lap` push day give the exact steps.
+
 ## Project config
 A work project may hold `.claude/v3-gauntlet.md` (keep it out of git: it can hold project details). Every key is optional; without the file the stages use their generic behaviour.
 ```
@@ -69,10 +73,15 @@ reviewer_agent: <agent name>      extra "conventions" critic in /v3-review; copi
 lap_stop_time: HH:MM              no new ticket starts in a lap after this time (default 06:30)
 lap_timezone: <tz>                for the stop time (default Asia/Manila, the devbox's zone)
 lap_parallel: on | off            tickets in a lap at once (default off)
-lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy
+lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy (and push day its temporary push worktrees)
+checkout: worktree | main         where BUILD works (default worktree: an EnterWorktree worktree, so the main checkout keeps its branch; main builds in the main checkout)
+push_skip_hooks: yes | no         yes: push with --no-verify because the gates already ran in the lap or BUILD (default no: the push runs the project's hooks in a temporary worktree, never in the main checkout)
 
 ## Intake
 <how to read a ticket: which tool, which site; free text>
+
+## Tracker status
+<how to move the user's own To Do ticket to In Progress at intake; free text, read on the laptop>
 
 ## Gates
 <name>: <command>                 a lap replaces {base} with the frozen base commit

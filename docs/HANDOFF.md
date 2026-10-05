@@ -37,20 +37,20 @@ The full plan (change list 1 to 20, decisions, order) is on the Notion page "v3-
 - No git remote and `gh` not logged in inside jobs. Notion API reachable; no token there.
 - The V3 stack, a backend pytest file, the ruff ratchet (pip venv, no uv), a frontend build and a Playwright smoke test all ran unattended from a clean worktree. Cold start about 10 minutes. Some backend tests already fail on clean master, so known reds from the baseline matter. Fixed ports: one stack at a time.
 
-## Built: items 6 to 14 (2026-10-05, v0.3.0), not yet run in a real lap
-- `/v3-lap` (`skills/lap/`, `commands/v3-lap.md`): start (clean worktree at the base, `lap-pack.sh`, `RULES.md` + lead brief, `devbox-git push`, `start_agent` lead, board Running), `result` (fetch, read the handoff from the job branch, board Ready / Needs you), `answer` (parse, record, follow-up for round 2), `push` (laptop push day).
-- `lap-pack.sh` (18 checks) and `lap-check.sh` (12 checks). `state.sh` allows `approved -> pr` for lap-built tickets.
-- `skills/lap/templates/RULES.md`: rails, stages (GO, freeze base, baseline, build test-first, task review, ticket review, wave, run, triage, exit pair, handoff), round 2, statuses, budgets, rulings, findings, handoff format.
-- Project agents: `planner_agent` is passed to the planner as conventions (format and test commands stay the plugin's, because the work project's planner writes another format for a Windows test runner); `reviewer_agent` is an extra conventions critic in `/v3-review` and is copied into `RULES.md` for the devbox.
-- SHIP's "Rebase" option is now "Merge the base in"; the plugin never rebases.
-- The work project's private config lives in its own `.claude/v3-gauntlet.md` (git-ignored there).
+## Built in 0.4.0 (2026-10-05)
+- Queue card: PLAN writes the tracker ticket (original and English) into the card body and creates Design, Plan, Rulings sub-pages.
+- `/v3-lap result` adds a "Handoff <lap>" sub-page to the card; new `notion-queue.mjs page` tool appends markdown and converts it to Notion blocks.
+- Tracker status: PLAN moves the user's own To Do ticket to In Progress at intake when the project config has a `## Tracker status` section.
+- Worktree option: config `checkout: worktree | main` (default worktree; local BUILD enters a worktree); push day never runs hooks in the main checkout (pushes from a temporary worktree or with `--no-verify`).
+- Lap stop time is a date field (not a time).
+- Lap 1 lessons: lead's git identity, no attribution rail, `origin/<base>` ref for tools, full baseline, batch replies with ranges, one question per block.
 
 ## Caveats and behaviours to know
 Setup
 - **No GitHub token on the devbox** (the optional field was left empty) and jobs have **no git remote**: jobs cannot push or open PRs. Push day is `/v3-lap push` on the laptop. Adding a token later would allow devbox pushes, but the plugin does not use that.
 - **No Notion token on the devbox.** SSH into the space was refused for the user's key at both the relay and the LAN address; the right host or port is unknown. The board is updated by the laptop only: Running at `/v3-lap`, Ready / Needs you at `/v3-lap result`. It does not move overnight.
 - **Notion token on the laptop only**, in `~/.config/v3-gauntlet/notion.env`, shared with the queue database alone. It can create and update cards, not delete them.
-- **The Atlassian Rovo connection on the laptop is logged in as a different person**, so tracker reads use the Composio connection first (set in the private config's Intake).
+- **The tracker connection on the laptop may be logged in as a different person**, so the primary tracker API reader is configured in the private config's Intake.
 - **The devbox runs on a shared Claude account.** The stop time (default 06:30 Asia/Manila) keeps a lap from starting new tickets right before the workday.
 
 Devbox behaviour
@@ -67,7 +67,10 @@ Laptop and repo
 - **First real lap not run yet.** `RULES.md`, the lead brief and `/v3-lap result|answer|push` are unproven; expect fixes after lap 1.
 - **Windows:** Git Bash has no `python3`, so 4 checks fail (validate JSON x2, a dev-server timing check, a fixture check). Node's `process.exit()` after a fetch aborts on Windows; the queue client sets `process.exitCode` instead.
 - **Guard hook:** while a ticket is Planned (phase `approved`), commits on its base branch are blocked in that checkout.
-- **Public repo:** commits so far carry the author's work email; company values stay in the private config.
+- **Public repo:** company values stay in the private config. Commits no longer carry tool attribution (0.4.0 enforces it).
 
-## Next
-Lap 1: plan one small ticket with `/v3-ticket`, drag it to Queued, run `/v3-lap`, then `result` / `answer` / `push`. Fix what it shows.
+## Next (2026-10-06)
+1. The lap ends with a full review pass per finished ticket (conventions with the project reviewer's rules, correctness, history, in-code comments, plus an impact trace), written in the project review tool's report format with head_sha = the final commit; `/v3-lap result` copies it into the vault, so the PR is the only step left.
+2. The project's ticket-planning tool creates the ticket cache, the vault folder + overview and the tracker ticket page the way the existing `/start-ticket` does, so the review tool and the guard hook work for lap tickets.
+3. Deep whole-branch review of 0.4.0 (today's final review was a quick skim at the owner's request).
+4. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.

@@ -71,6 +71,13 @@ fi
 is_push || is_commit || exit 0
 TW="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../skills/ticket-workspace/scripts"
 br=$(git -C "$dir" branch --show-current 2>/dev/null) || exit 0
+if [ -z "$br" ] && is_push; then
+  # Detached HEAD (a temporary push worktree): the branch pushed is the refspec's destination.
+  # Read from "shape": quoted text (such as a -C path holding the word push) is already removed.
+  br=$(printf '%s\n' "$shape" | perl -ne '
+    if (/\bpush\b([^;&|\n]*)/) { my @a = grep { !/^-/ } map { s/^["\x27]|["\x27]$//gr } split " ", $1;
+      if (@a >= 2) { my $d = $a[1]; $d =~ s/^\+//; $d =~ s/^.*://; $d =~ s{^refs/heads/}{}; print $d; exit } }' 2>/dev/null)
+fi
 [ -n "$br" ] || exit 0
 list=$(cd "$dir" && bash "$TW/ticket-ws.sh" list 2>/dev/null) || exit 0
 [ -n "$list" ] || exit 0
