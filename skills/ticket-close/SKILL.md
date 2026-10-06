@@ -18,7 +18,7 @@ Read `v3-gauntlet:ticket-workspace` first. `S` = `bash "$SKILL_DIR/../ticket-wor
       - Another tracker → its MCP tool if available; otherwise print the one manual step.
    2. If the session is in the ticket's worktree, `ExitWorktree` with `action: "keep"` first.
    3. If `checkout` is a worktree path: `git worktree remove <path>` (never with `--force`; report a refusal).
-   4. In the main checkout, if its tree is clean (this is where `git switch` runs): `git switch <base_branch>` and, when a remote exists, `git pull --ff-only`.
+   4. In the main checkout, if its tree is clean (this is where `git switch` runs): `git switch <base_branch>` and, when a remote exists, `git pull --ff-only`. If state has `worktree_branch` (the branch `EnterWorktree` made for itself), delete it with `git branch -d <worktree_branch>`; git refuses when it holds unmerged commits, and then keep it and report it.
    5. Delete the local branch: `git branch -d <branch>`. If git refuses (a squash or rebase merge), run `bash "$SKILL_DIR/../ticket-workspace/scripts/pr-state.sh" --head-matches <pr_url> <branch>`:
       - `same` → the local tip is exactly the PR head GitHub merged, so no unmerged work is lost: `git branch -D <branch>`, and report why `-D` was safe.
       - `differs` or `could-not-run` → never `-D`; keep the branch, report why, and tell the user they may delete it with `git branch -D <branch>` after checking it holds nothing unmerged.

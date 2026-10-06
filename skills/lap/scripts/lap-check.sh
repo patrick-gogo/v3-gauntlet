@@ -32,6 +32,8 @@ else
   if [ -n "$author" ]; then
     wrong=$(git log --format='%ae %h' "$base..$br" | awk -v a="$author" '$1 != a { print "author " $1 " on " $2 }')
     [ -z "$wrong" ] || fail="${fail}${wrong}${NL}"
+    wrongc=$(git log --format='%ce %h' "$base..$br" | awk -v a="$author" '$1 != a { print "committer " $1 " on " $2 }')
+    [ -z "$wrongc" ] || fail="${fail}${wrongc}${NL}"
   fi
   # The attribution patterns live in scripts/check-commits.sh; it names each offending commit.
   if [ -f "$CC" ]; then

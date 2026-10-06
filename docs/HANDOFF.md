@@ -74,9 +74,11 @@ Laptop and repo
 - PLAN creates the project's own ticket records (`## Ticket records`).
 - The lead drafts review-request fields (handoff section 5); push day fills the config's `## Review request` template.
 - Push day: drift and conflict check (`drift.sh`), re-authored commits keep their review (`review-head.sh`), pushes always from a temporary worktree, skips tickets with pending changes, attribution check in `lap-check.sh`.
-- Deep review of 0.4.0 done: 8 Important findings fixed (SHIP first push, attribution check, round-2 push, guard refspec and path parse, public-repo values, hook defaults, re-author hooks). The 14 Minor findings are tracked on the owner's to-do list for a later pass.
+- Deep review of 0.4.0 done: 8 Important findings fixed (SHIP first push, attribution check, round-2 push, guard refspec and path parse, public-repo values, hook defaults, re-author hooks). 5 of its 14 Minor findings were fixed in 0.5.0 along the way.
+
+## Built in 0.5.1
+- The other 9 Minor findings: Notion retries on rate limits and server errors, uploads split by size, an unclosed code fence is closed, bold and inline code render on cards, deep headings and nested lists keep their shape, the card body stays above its sub-pages; the committer email is checked too; en dash ranges and a clearer reply error; the stop time is checked before a lap starts; push day resumes after a re-author, scans the PR body for secrets, and finds its temporary folder from the git common dir; CLOSE removes the worktree tool's own branch.
 
 ## Next
-1. Run a lap with 0.5.0 end to end (final review on the devbox, push day without a manual review).
+1. Run a lap with 0.5.1 end to end (final review on the devbox, push day without a manual review).
 2. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.
-3. The 0.4.0 review's Minor findings.

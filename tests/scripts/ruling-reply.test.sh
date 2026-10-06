@@ -35,7 +35,7 @@ assert_contains "$out" "no ruling 5" "names the unknown number"
 
 out=$(bash "$S" 2 "1 keep 2 maybe" 2>&1); code=$?
 assert_eq 2 "$code" "an unclear answer is refused"
-assert_contains "$out" "ruling 2: say keep or change" "asks for keep or change"
+assert_contains "$out" "ruling 2: say keep, change, yes or no" "asks for keep or change"
 
 out=$(bash "$S" 2 "1 keep 2 change:" 2>&1); code=$?
 assert_eq 2 "$code" "change needs text"
@@ -111,7 +111,7 @@ assert_eq "1 keep
 
 out=$(bash "$S" 2 "1 maybe 2 keep" --yesno 2 2>&1); code=$?
 assert_eq 2 "$code" "free text on a question not marked yes/no is still refused"
-assert_contains "$out" "ruling 1: say keep or change" "same message"
+assert_contains "$out" "ruling 1: say keep, change, yes or no" "same message"
 
 out=$(bash "$S" 2 "1 keep 2 keep" 2>&1); assert_eq "1 keep
 2 keep" "$out" "without --yesno keep stays keep"
@@ -119,4 +119,18 @@ out=$(bash "$S" 2 "1 keep 2 keep" 2>&1); assert_eq "1 keep
 bash "$S" 2 "1 keep 2 keep" --yesno 5 >/dev/null 2>&1; assert_eq 2 $? "a yes/no number past the last ruling is bad input"
 bash "$S" 2 "1 keep 2 keep" --yesno >/dev/null 2>&1; assert_eq 2 $? "--yesno needs a value"
 bash "$S" 2 "1 keep 2 keep" --bogus >/dev/null 2>&1; assert_eq 2 $? "unknown option is bad input"
+
+EN=$(printf '\342\200\223'); EM=$(printf '\342\200\224')
+out=$(bash "$S" 3 "1${EN}3 keep" 2>&1); code=$?
+assert_eq 0 "$code" "an en dash range is accepted"
+assert_eq "1 keep
+2 keep
+3 keep" "$out" "en dash range applies to every number"
+out=$(bash "$S" 3 "1${EM}2 keep 3 change: x" 2>&1); code=$?
+assert_eq 0 "$code" "an em dash range is accepted"
+assert_contains "$out" "2 keep" "em dash range covers its end"
+out=$(bash "$S" 2 "1 keep 2 change: use a ${EM} b" 2>&1)
+assert_contains "$out" "use a ${EM} b" "a dash inside change text is left alone"
+out=$(bash "$S" 2 "1 keep 2 maybe" 2>&1)
+assert_contains "$out" "say keep, change, yes or no" "unknown word lists every accepted word"
 finish
