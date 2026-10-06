@@ -51,4 +51,21 @@ out=$(bash "$C" bugfix/T-1-good "$BASE" --author t@example.com); code=$?
 assert_eq 0 "$code" "the right author passes"
 out=$(bash "$C" bugfix/T-1-good "$BASE" --snapshot "$BASE" --author t@example.com 2>&1); code=$?
 assert_eq 1 "$code" "--snapshot and --author work together"
+
+CO="Co-""Authored-By"   # split so validate.sh's attribution scan does not match this file
+git switch -qc bugfix/T-7-trailer "$BASE"; echo f >> app.txt
+git commit -qam "fix(T-7): Tagged
+
+$CO: Claude Opus <noreply@anthropic.com>"; BAD=$(git rev-parse --short=8 HEAD)
+out=$(bash "$C" bugfix/T-7-trailer "$BASE" 2>&1); code=$?
+assert_eq 1 "$code" "a commit with tool attribution fails"
+assert_contains "$out" "attribution $BAD" "names the commit"
+out=$(bash "$C" bugfix/T-1-good "$BASE" 2>&1); assert_eq 0 $? "a clean branch still passes the attribution check"
+
+bash "$C" bugfix/T-1-good "$BASE" --author "" >/dev/null 2>&1; assert_eq 2 $? "an empty --author is bad input"
+bash "$C" bugfix/T-1-good "$BASE" --snapshot "" >/dev/null 2>&1; assert_eq 2 $? "an empty --snapshot is bad input"
+
+# Failure text with a percent sign must print as written, not be read as a format string.
+git switch -qc bugfix/T-8-pct "$BASE"; echo 1 > 'p%sx.txt'; mkdir -p docs/gauntlet; echo 1 > 'docs/gauntlet/p%sx.md'; git add .; git commit -qm "fix(T-8): Pct"
+out=$(bash "$C" bugfix/T-8-pct "$BASE" 2>&1); assert_contains "$out" "docs/gauntlet/p%sx.md" "failure text prints verbatim"
 finish

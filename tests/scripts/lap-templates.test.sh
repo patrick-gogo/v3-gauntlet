@@ -12,4 +12,6 @@ assert_contains "$rules" "type: review-mine" "the final review uses the review-m
 assert_contains "$rules" "head_sha: <first 8 characters of the reviewed tip>" "the final review records the reviewed tip"
 assert_contains "$rules" "| Final review |" "the handoff ticket table has a final review column"
 assert_contains "$brief" "final-review.md" "the brief's done-means lists the final review"
+assert_contains "$rules" "## 5. Review request" "the handoff has a review request section"
+assert_contains "$rules" "Self-review:" "the review request carries the self-review line"
 finish

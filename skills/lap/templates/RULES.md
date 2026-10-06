@@ -153,4 +153,16 @@ Every ruling, T3 and T2 first.
 ## 4. Follow-ups and lessons
 fix-elsewhere items, pre-existing problems found, cross-repo mirror changes needed, and one
 line per slip that cost time.
+
+## 5. Review request
+One block per Ready ticket, plain text, no mentions, no names, no IDs, no Markdown
+(the laptop adds those on push day):
+### <id>
+Type: Fix | Feature | Chore            (from the branch type)
+What: <one sentence: what changed and why>
+Bullets:
+- <one clause>
+- <one clause, at most two bullets>
+Testing: <one line: what ran and the result>
+Self-review: <"clean" or "found N, fixed N"> (from 2.8b)
 ```
