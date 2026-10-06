@@ -8,7 +8,7 @@
 
 **Tech Stack:** Markdown skills, bash scripts tested with `tests/run.sh` (macOS bash 3.2 compatible), Node scripts tested with `node --test tests/node`.
 
-**Spec:** the v3-gauntlet to-do page for 2026-10-06 (sections 1 and 2) and the 2026-10-06 push day of V3-2449, which was done by hand and showed every step this plan automates.
+**Spec:** the v3-gauntlet to-do page for 2026-10-06 (sections 1 and 2) and the 2026-10-06 push day of the second lap ticket, which was done by hand and showed every step this plan automates.
 
 ## Global Constraints
 
@@ -108,6 +108,17 @@ The six listed on the to-do page, plus the deep review's Critical and Important 
 - [ ] PLAN sets `card: done` only when the upsert returned 0; one wording rule: any non-zero exit is one line, continue.
 - [ ] `stop-time.mjs`: tomorrow by calendar date, not +24h; missing zone argument exits 2 (tests first).
 - [ ] Round 2 handoff page title `Handoff <lap> r2`.
+
+Deep review of 0.4.0 (2026-10-06): 0 Critical, 8 Important, 14 Minor. The Important ones, each with a test first where a script changes:
+- [ ] I1 SHIP push from a detached temp worktree uses `HEAD:<branch>`, which git rejects on a first push: push `<branch>` by name (or from the ticket worktree).
+- [ ] I2 `lap-check.sh` fails on tool attribution in any commit message `base..branch` (same patterns as `scripts/check-commits.sh`).
+- [ ] I3 push day skips a ticket with a `change` answer or while the lap is in round 2, unless the owner names it.
+- [ ] I4 guard judges a push by the destination branch in the refspec, attached or detached; current branch only without a refspec.
+- [ ] I5 guard anchors the push parse on the git command, so an unquoted `push-<id>` path cannot fail open.
+- [ ] I6 public repo: replace the real tracker key with a placeholder, the devbox user with `<user>@devbox.local`, restore the commit-email caveat (the owner decides on a noreply address).
+- [ ] I7 laps default to `push_skip_hooks: yes`; SHIP in worktree mode pushes from the ticket worktree; document that a temp push worktree needs dependencies.
+- [ ] I8 re-author exec adds `--no-verify --no-gpg-sign`; TMP defined before use; `git ls-remote` proves the branch is unpublished first.
+Minors M1-M14 stay in the review report for a later pass unless one is a one-line fix in a file this plan already edits.
 
 - [ ] Commit per fix, `fix: ...`.
 
