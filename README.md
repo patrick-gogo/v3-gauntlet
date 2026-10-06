@@ -109,6 +109,8 @@ The lap is sent from a clean temporary worktree at the base branch, never from y
 
 **Push day checks.** Before pushing, `/v3-lap push` checks how far the base branch has moved (`drift.sh`: commits behind, files changed on both sides, a real conflict stops the ticket), accepts the final review when the commits were only re-authored (`review-head.sh` compares trees), and otherwise runs a review first. It pushes from a temporary worktree, never the main checkout, skipping hooks by default because the gates ran in the lap. With a `## Review request` section it fills a review-request draft from the lead's handoff fields. A ticket with a pending change answer, or any ticket during round 2, is pushed only when you name it.
 
+**Lap announcement.** With a `## Lap announcement` section in the project config, `/v3-lap` drafts a message announcing tonight's tickets when the lap starts (filled from the template there, delivered as a draft).
+
 **Ticket records.** With a `## Ticket records` section in the project config, PLAN also creates the project's own per-ticket notes at intake (whatever a later review or guard expects).
 
 ### Known limits
