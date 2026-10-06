@@ -68,4 +68,11 @@ bash "$C" bugfix/T-1-good "$BASE" --snapshot "" >/dev/null 2>&1; assert_eq 2 $? 
 # Failure text with a percent sign must print as written, not be read as a format string.
 git switch -qc bugfix/T-8-pct "$BASE"; echo 1 > 'p%sx.txt'; mkdir -p docs/gauntlet; echo 1 > 'docs/gauntlet/p%sx.md'; git add .; git commit -qm "fix(T-8): Pct"
 out=$(bash "$C" bugfix/T-8-pct "$BASE" 2>&1); assert_contains "$out" "docs/gauntlet/p%sx.md" "failure text prints verbatim"
+
+# Right author but a different committer is not safe either.
+git switch -qc bugfix/T-9-committer "$BASE"; echo g >> app.txt
+GIT_COMMITTER_EMAIL=devbox@devbox.local git commit -qam "fix(T-9): Committed elsewhere"
+out=$(bash "$C" bugfix/T-9-committer "$BASE" --author t@example.com 2>&1); code=$?
+assert_eq 1 "$code" "a commit by another committer fails with --author"
+assert_contains "$out" "committer devbox@devbox.local on" "names the wrong committer"
 finish

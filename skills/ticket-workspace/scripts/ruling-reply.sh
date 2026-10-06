@@ -24,7 +24,9 @@ for q in $yesno; do
   { [ "$q" -ge 1 ] && [ "$q" -le "$count" ]; } || { echo "--yesno $q: no such ruling (there are $count)" >&2; exit 2; }
 done
 
-printf '%s\n' "$reply" | LC_ALL=C awk -v count="$count" -v yesno="$yesno" '
+# An en or em dash between digits reads as a hyphen, so "1–3 keep" is a range.
+EN=$(printf '\342\200\223'); EM=$(printf '\342\200\224')
+printf '%s\n' "$reply" | LC_ALL=C sed -e "s/\([0-9]\)$EN\([0-9]\)/\1-\2/g" -e "s/\([0-9]\)$EM\([0-9]\)/\1-\2/g" | LC_ALL=C awk -v count="$count" -v yesno="$yesno" '
   function flush(  k, yn) {
     if (cur == "") return
     for (k = cur; k <= curhi; k++) {
@@ -34,7 +36,7 @@ printf '%s\n' "$reply" | LC_ALL=C awk -v count="$count" -v yesno="$yesno" '
       else if (verb == "keep" || verb == "yes" || verb == "no") { if (txt == "") ans[k] = verb; else if (yn) ans[k] = verb " " txt; else err = err "ruling " k ": " verb " takes no text\n" }
       else if (verb == "change") { if (txt == "") err = err "ruling " k ": change needs what to change\n"; else ans[k] = "change " txt }
       else if (verb == "?" && yn) ans[k] = txt
-      else err = err "ruling " k ": say keep or change\n"
+      else err = err "ruling " k ": say keep, change, yes or no\n"
     }
   }
   # A verb token: keep, change, yes or no, any case, with an optional trailing ":" "," or ".".
