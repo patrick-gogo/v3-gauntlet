@@ -73,10 +73,10 @@
   .reply{background:#05060f;border:1px dashed var(--maze);border-radius:8px;padding:8px;margin-top:8px;white-space:pre-wrap;font-size:12px}
   footer{max-width:1200px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
 
-  #multi{max-width:1200px;margin:0 auto 30px;padding:0 16px}
-  #multi .wrap{border:3px solid var(--maze);border-radius:14px;background:var(--night);padding:26px 16px 18px;position:relative}
-  #multi h2{position:absolute;top:-14px;left:16px;margin:0;background:var(--bg);padding:0 8px;color:var(--pac);font-size:16px;letter-spacing:1px}
-  #multi .sub{margin:0 0 14px}
+  #multi,#laps{max-width:1200px;margin:0 auto 30px;padding:0 16px}
+  #multi .wrap,#laps .wrap{border:3px solid var(--maze);border-radius:14px;background:var(--night);padding:26px 16px 18px;position:relative}
+  #multi h2,#laps h2{position:absolute;top:-14px;left:16px;margin:0;background:var(--bg);padding:0 8px;color:var(--pac);font-size:16px;letter-spacing:1px}
+  #multi .sub,#laps .sub{margin:0 0 14px}
   .tl{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;align-items:center}
   .tl .who{font-size:12px;color:var(--muted);text-align:right}
   .tl .row{position:relative;height:34px;border-radius:8px;background:#0b0e26}
@@ -110,7 +110,6 @@
   </div>
   <div class="legend">
     <span><span class="badge b-ok">DONE</span> built and tested (merged)</span>
-    <span><span class="badge b-built">BUILT</span> written, lap 1 running now</span>
     <span><span class="badge b-plan">PLANNED</span> designed, not built yet</span>
   </div>
 </header>
@@ -124,8 +123,9 @@
     <div class="panel">
       <h2>Words</h2>
       <ul>
-        <li><b>Lap</b>: one batch, from GO to handoff.</li>
-        <li><b>Round</b>: one trip from building to the exit pair. Change requests start a new round.</li>
+        <li><b>Lap</b>: one <code>/v3-lap</code> = one devbox session for a set of tickets, from packing until push day. It has one id (<code>lap-20261006-0944</code>) and its tickets keep their branches for the whole lap.</li>
+        <li><b>Round</b>: one build-review-test pass inside a lap, ending in a handoff. Round 1 is the first night. Every change you ask for afterwards (from your answers, or from the push-day review) is a <b>follow-up</b> to the same session: round 2, round 3, on the same branches. A new round is never a new lap.</li>
+        <li><b>New lap</b>: only when you send new tickets with <code>/v3-lap</code>.</li>
         <li><b>Wave</b>: every branch merged and deployed to the stack once.</li>
         <li><b>Run</b>: one pass of the Playwright matrix, about 14 minutes.</li>
         <li><b>Exit pair</b>: two green runs in a row on the same build.</li>
@@ -193,6 +193,26 @@
       <li>Stop time: a ticket not started by 06:30 comes back as Needs you ("not reached").</li>
       <li>Budgets are per ticket, so one hard ticket cannot eat the others' share. Three tickets use about three times lap 1's usage of the shared account.</li>
       <li>A merge conflict between tickets that is not trivial drops the later ticket from that wave, with a note in the handoff.</li>
+    </ul>
+  </div>
+</section>
+<section id="laps" aria-label="Lap versus round">
+  <div class="wrap">
+    <h2>LAP vs ROUND (from a real lap)</h2>
+    <div class="sub">One lap, several rounds. Every round after the first is a follow-up to the same devbox session, on the same branch. Read top to bottom:</div>
+    <div class="steps">
+      <div class="step"><b>Lap starts</b><br><code>/v3-lap</code> packs ticket ABC-123 from a clean copy of master and starts one devbox session: lap <code>lap-20261006-0944</code>, branch <code>devbox/lap-20261006-0944/bugfix/ABC-123-...</code>.</div>
+      <div class="step"><b>Round 1</b> (devbox)<br>Builds test-first, reviews, runs the gates, writes the handoff. Status: Ready.</div>
+      <div class="step"><b>Result + answers</b> (laptop)<br><code>/v3-lap result</code> brings it home. You answer "1 keep 2 yes". No change asked, so nothing goes back.</div>
+      <div class="step"><b>Push day review</b> (laptop)<br><code>/v3-lap push</code> checks drift and reviews before pushing. It found master had merged a new tax rule from another ticket after round 1 started. Push stopped, nothing pushed.</div>
+      <div class="step"><b>Round 2</b> (devbox, follow-up)<br>The fixes go to the <b>same</b> session as a follow-up: merge master, change one formula, update tests, new handoff. Same lap id, same branch.</div>
+      <div class="step"><b>Round 3, if needed</b><br>If the spec owner rules differently, one more follow-up to the same session. Still the same lap. Then result, answer, push again.</div>
+    </div>
+    <ul class="notes">
+      <li><b>Where a round can start:</b> your handoff answers (<code>/v3-lap answer</code> with a "change"), or the push-day review finding something to fix.</li>
+      <li><b>What never happens in a round:</b> a push. GitHub only sees the branch on push day, after you say "push".</li>
+      <li><b>A finished session can still take a follow-up</b>, so a round can start the next morning or days later.</li>
+      <li><b>New lap</b> = new tickets packed with <code>/v3-lap</code>. Tickets from different laps never share a session.</li>
     </ul>
   </div>
 </section>
