@@ -111,7 +111,7 @@
   <div class="legend">
     <span><span class="badge b-ok">DONE</span> built and tested (merged)</span>
     <span><span class="badge b-built">BUILT</span> written, lap 1 running now</span>
-    <span><span class="badge b-plan">PLANNED</span> in the 2026-10-05 improvement plan, not built yet</span>
+    <span><span class="badge b-plan">PLANNED</span> designed, not built yet</span>
   </div>
 </header>
 
@@ -196,7 +196,7 @@
     </ul>
   </div>
 </section>
-<footer>Modelled on the devbox guide's gauntlet loop. DONE = merged and tested; BUILT = written, lap 1 running; PLANNED = in the 2026-10-05 plan.</footer>
+<footer>Modelled on the devbox guide's gauntlet loop. DONE = merged (0.5.x); PLANNED = designed, not built yet.</footer>
 
 <script>
 const LANES = [
@@ -206,10 +206,10 @@ const LANES = [
 ];
 const S = [
   {lane:"day", t:"Inbox", where:"Notion", who:"You", badge:"ok",
-   does:["Add the ticket key (e.g. V3-1234) to the Gauntlet Queue board, column Inbox.","/v3-ticket with no argument lists the Inbox to pick from.","PLANNED: opening the card shows the Jira ticket and its English translation; Design, Plan, Rulings and Handoff sub-pages under it."],
+   does:["Add the ticket key (e.g. V3-1234) to the Gauntlet Queue board, column Inbox.","/v3-ticket with no argument lists the Inbox to pick from.","opening the card shows the Jira ticket and its English translation; Design, Plan, Rulings and Handoff sub-pages under it."],
    out:["A row in Notion with Key and Title"]},
   {lane:"day", t:"/v3-ticket PLAN", where:"Laptop", who:"Claude, you only read", badge:"ok",
-   does:["Reads the ticket from Jira (project config) and translates any Japanese.","Code-context agent, unattended brainstorm, then the planner writes the plan with tests per task.","Every decision goes with Claude's recommendation and becomes a numbered ruling, tagged T1 / T2 / T3. Nothing waits for you.","Records the branch name and base; never creates a branch or starts building.","PLANNED: moves your own To Do ticket to In Progress in Jira at intake."],
+   does:["Reads the ticket from Jira (project config) and translates any Japanese.","Code-context agent, unattended brainstorm, then the planner writes the plan with tests per task.","Every decision goes with Claude's recommendation and becomes a numbered ruling, tagged T1 / T2 / T3. Nothing waits for you.","Records the branch name and base; never creates a branch or starts building.","moves your own To Do ticket to In Progress in Jira at intake."],
    out:["Acceptance criteria, plan, rulings, scope, gates, budget"]},
   {lane:"day", t:"Rulings batch", where:"Laptop", who:"You", badge:"ok",
    does:["One batch: each ruling's pick, the alternative, the cost if wrong and its T-level, T3/T2 first.","Your reply is parsed strictly (a missed or unclear number is asked again). Changes go into the plan and only the changed rulings come back."],
@@ -221,41 +221,41 @@ const S = [
   {lane:"day", t:"Drag to Queued", where:"Notion", who:"You", badge:"ok",
    does:["Drag the card to Queued and set Order (lower runs first).","The Run order view shows exactly what tonight's lap will take."],
    out:["Tonight's batch"]},
-  {lane:"day", t:"/v3-lap", where:"Laptop to devbox", who:"You start it, then close the laptop", badge:"built",
+  {lane:"day", t:"/v3-lap", where:"Laptop to devbox", who:"You start it, then close the laptop", badge:"ok",
    does:["Reads Queued rows in Order and checks each is Planned.","Makes a clean temporary copy of the repo at master, so your local uncommitted edits never leave the laptop.","Packs docs/gauntlet/<lap>/ (lead brief, each ticket's plan and rulings) and docs/gauntlet/RULES.md (the lap rules plus the V3 gates, stack and house rules from the private config).","Pushes that copy and starts /devbox:lead; marks the cards Running."],
    out:["A devbox lead job (a ghost on the board)"]},
-  {lane:"night", t:"GO + freeze base", where:"Devbox", who:"The lead", badge:"built",
+  {lane:"night", t:"GO + freeze base", where:"Devbox", who:"The lead", badge:"ok",
    does:["Reads RULES.md, then the brief. The clean base is the parent of its starting commit.","Brings the V3 stack up in Docker from a clean worktree (proven: about 1 to 2 minutes for the API, 10 minutes cold with the frontend build).","Runs every gate on the base first: failures there are known reds (some backend tests already fail on master)."],
    out:["Stack running, baseline recorded"]},
-  {lane:"night", t:"BUILD", where:"Devbox", who:"Fresh helper per task", badge:"built", pellet:true,
+  {lane:"night", t:"BUILD", where:"Devbox", who:"Fresh helper per task", badge:"ok", pellet:true,
    does:["Each ticket on its own branch devbox/<lap>/<branch> (only devbox/ branches come home).","Per task: failing test first (written into RULES.md, since the space has no superpowers), smallest fix, one commit.","The lead re-runs the gates itself. One heavy thing at a time; anything over 10 minutes runs detached."],
    out:["Commits, one branch per ticket","Ledger line per step"]},
-  {lane:"night", t:"Review + fix rounds", where:"Devbox", who:"Fresh critics (ghosts)", badge:"built",
+  {lane:"night", t:"Review + fix rounds", where:"Devbox", who:"Fresh critics (ghosts)", badge:"ok",
    does:["A fresh reviewer per task, then critics on the whole ticket: impact, security and regression, requirements.","Only fix-here findings are fixed (failing test first, fresh re-review). Others go to the handoff as follow-ups.","Stops at PASS, no progress for two rounds, or the budget."],
    out:["Reviewed branches"]},
-  {lane:"night", t:"Wave", where:"Devbox", who:"The lead", badge:"built",
+  {lane:"night", t:"Wave", where:"Devbox", who:"The lead", badge:"ok",
    does:["Merges every reviewed branch into a throwaway integration branch.","Deploys it to the stack in the space."],
    out:["All of tonight's work running together"]},
-  {lane:"night", t:"Run: gates + audits", where:"Devbox", who:"The lead + helpers", badge:"built",
+  {lane:"night", t:"Run: gates + audits", where:"Devbox", who:"The lead + helpers", badge:"ok",
    does:["Backend tests, ruff ratchet, frontend ratchet and the Playwright smoke test (all proven in the spike).","Plus a cross-branch audit agent and, when time allows, an exploring browser agent."],
    out:["Green, or a list of reds"]},
-  {lane:"night", t:"Triage reds", where:"Devbox", who:"The lead", badge:"built", loop:"back to BUILD",
+  {lane:"night", t:"Triage reds", where:"Devbox", who:"The lead", badge:"ok", loop:"back to BUILD",
    does:["Sorts each red: product, test harness, setup, load, or already broken before.","A product bug goes back to BUILD. Every slip becomes a lesson in the handoff."],
    out:["Fix tasks, or notes for the handoff"]},
-  {lane:"night", t:"Exit pair", where:"Devbox", who:"The lead", badge:"built",
+  {lane:"night", t:"Exit pair", where:"Devbox", who:"The lead", badge:"ok",
    does:["Two green runs in a row on the same build end the round.","Stop time reached first: it records how far it got."],
    out:["Proof the tickets work together"]},
-  {lane:"night", t:"Handoff", where:"Devbox", who:"The lead", badge:"built",
+  {lane:"night", t:"Handoff", where:"Devbox", who:"The lead", badge:"ok",
    does:["Writes docs/gauntlet/<lap>-handoff.md on its own job branch: section 0 questions with picks, the ticket table, evidence, rulings, follow-ups.","T2 and T3 rulings are always questions.","Your phone pings. The board does not move overnight: the devbox has no Notion token, so the laptop updates it in the morning."],
    out:["Handoff note, ticket branches"]},
-  {lane:"morning", t:"/v3-lap result", where:"Laptop", who:"You, or a watching session", badge:"built",
-   does:["Fetches the job's branches and reads the handoff from the job branch.","Moves each card to Ready or Needs you on the board.","Shows section 0 (the questions) and the ticket table.","A Claude session left open can watch the job and run this for you when it ends.","PLANNED: the handoff also lands as a sub-page on each card."],
+  {lane:"morning", t:"/v3-lap result", where:"Laptop", who:"You, or a watching session", badge:"ok",
+   does:["Fetches the job's branches and reads the handoff from the job branch.","Moves each card to Ready or Needs you on the board.","Shows section 0 (the questions) and the ticket table.","A Claude session left open can watch the job and run this for you when it ends.","the handoff also lands as a sub-page on each card."],
    out:["The night's results on the board"]},
-  {lane:"morning", t:"/v3-lap answer", where:"Laptop to devbox", who:"You", badge:"built", loop:"round 2: back to BUILD",
+  {lane:"morning", t:"/v3-lap answer", where:"Laptop to devbox", who:"You", badge:"ok", loop:"round 2: back to BUILD",
    does:["Your one-line reply is parsed and recorded as rulings.","Answers that ask for changes go to the same devbox session as a follow-up: round 2."],
    reply:"1 keep 2 keep 3 yes 4 change: keep the old label",
    out:["Round 2 running, or nothing to change"]},
-  {lane:"morning", t:"/v3-lap push", where:"Laptop", who:"Only on your word", badge:"plan",
+  {lane:"morning", t:"/v3-lap push", where:"Laptop", who:"Only on your word", badge:"ok",
    does:["Per Ready ticket: a safety check (built on the clean base, has commits, no docs/gauntlet files), a secret scan, then push from the laptop.","Opens the draft PR as the project config says, posts the chat review-request draft, and moves the card to PR open with the PR link.","PLANNED before first use: the push runs from a temporary worktree (or skips the hook), so your pre-push build never runs in your main checkout."],
    reply:"push",
    out:["Draft PRs, one per ticket"]},
