@@ -65,22 +65,34 @@ function props(opts, withTitle) {
   return p;
 }
 
-function client({ token, fetch }) {
+const MAX_ATTEMPTS = 5;
+const MAX_BODY_BYTES = 400000; // Notion rejects request bodies over 500KB; stay well under
+const realSleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// 429 and 5xx are retried up to MAX_ATTEMPTS times: wait Retry-After seconds when the header is there, else 0.5s, 1s, 2s, 4s.
+function client({ token, fetch, sleep = realSleep }) {
   return async (method, path, body) => {
-    let res;
-    try {
-      res = await fetch(API + path, {
-        method,
-        headers: { Authorization: `Bearer ${token}`, 'Notion-Version': NOTION_VERSION, 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-    } catch (e) {
-      throw new CouldNotRun(String(e.message || e).replaceAll(token, '***'));
+    for (let attempt = 1; ; attempt++) {
+      let res;
+      try {
+        res = await fetch(API + path, {
+          method,
+          headers: { Authorization: `Bearer ${token}`, 'Notion-Version': NOTION_VERSION, 'Content-Type': 'application/json' },
+          body: body ? JSON.stringify(body) : undefined,
+        });
+      } catch (e) {
+        throw new CouldNotRun(String(e.message || e).replaceAll(token, '***'));
+      }
+      let data = {};
+      try { data = await res.json(); } catch { data = {}; }
+      if (res.ok) return data;
+      if ((res.status === 429 || res.status >= 500) && attempt < MAX_ATTEMPTS) {
+        const secs = Number(res.headers?.get?.('retry-after'));
+        await sleep(Number.isFinite(secs) && secs >= 0 && res.headers.get('retry-after') !== '' ? secs * 1000 : 500 * 2 ** (attempt - 1));
+        continue;
+      }
+      throw new CouldNotRun(`HTTP ${res.status}: ${String(data.message || 'no message').replaceAll(token, '***')}`);
     }
-    let data = {};
-    try { data = await res.json(); } catch { data = {}; }
-    if (!res.ok) throw new CouldNotRun(`HTTP ${res.status}: ${String(data.message || 'no message').replaceAll(token, '***')}`);
-    return data;
   };
 }
 
@@ -122,17 +134,42 @@ async function listChildren(call, id) {
   return all;
 }
 
+// Split blocks into append requests of at most 100 blocks and MAX_BODY_BYTES of JSON.
+function chunkBlocks(blocks) {
+  const chunks = [];
+  let cur = [], bytes = 0;
+  for (const b of blocks) {
+    const size = Buffer.byteLength(JSON.stringify(b)) + 1;
+    if (cur.length && (cur.length >= 100 || bytes + size > MAX_BODY_BYTES)) { chunks.push(cur); cur = []; bytes = 0; }
+    cur.push(b); bytes += size;
+  }
+  if (cur.length) chunks.push(cur);
+  return chunks;
+}
+
 async function replaceBlocks(call, id, blocks, keep = () => false, fresh = false) {
   // Append first, delete after: a failed append must not leave the page empty.
-  const old = fresh ? [] : (await listChildren(call, id)).filter((b) => !keep(b));
-  for (let i = 0; i < blocks.length; i += 100) await call('PATCH', `/blocks/${id}/children`, { children: blocks.slice(i, i + 100) });
+  const children = fresh ? [] : await listChildren(call, id);
+  const old = children.filter((b) => !keep(b));
+  const chunks = chunkBlocks(blocks);
+  // Sub-page links must stay below the body. The append endpoint only adds to the end unless given `after`, so when a
+  // sub-page exists the new blocks go after the last old body block above the first sub-page. Every chunk uses that same
+  // anchor and the chunks are sent last-first, so each one lands in front of the previous and the final order is correct.
+  // If the sub-page is the very first block there is no anchor to insert after and the body is appended at the end.
+  const firstPage = children.findIndex((b) => keep(b));
+  const anchor = firstPage > 0 ? children[firstPage - 1].id : undefined;
+  if (anchor) {
+    for (const chunk of chunks.reverse()) await call('PATCH', `/blocks/${id}/children`, { children: chunk, after: anchor });
+  } else {
+    for (const chunk of chunks) await call('PATCH', `/blocks/${id}/children`, { children: chunk });
+  }
   for (const b of old) await call('DELETE', `/blocks/${b.id}`);
 }
 
 const USAGE = 'usage: notion-queue.mjs check | list [--status S] | upsert --key K --title T [--status S] [--repo R] [--branch B] [--notes N] [--report URL] | status --key K --status S [...] | page --key K --file F [--child T]';
 
 export async function main(argv, deps) {
-  const { env, fetch, readFile, out, err } = deps;
+  const { env, fetch, readFile, out, err, sleep } = deps;
   try {
     const { cmd, opts } = parseArgs(argv);
     if (!['check', 'list', 'upsert', 'status', 'page'].includes(cmd)) throw new BadInput(USAGE);
@@ -151,7 +188,7 @@ export async function main(argv, deps) {
 
     const { token, db } = loadConfig(env, readFile);
     if (!token || !db) throw new CouldNotRun('no token or database id: set NOTION_TOKEN and GAUNTLET_QUEUE_DB, or write them to ~/.config/v3-gauntlet/notion.env');
-    const call = client({ token, fetch });
+    const call = client({ token, fetch, sleep });
 
     if (cmd === 'check') {
       const d = await call('GET', `/databases/${db}`);

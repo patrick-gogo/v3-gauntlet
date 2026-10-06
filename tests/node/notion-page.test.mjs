@@ -8,21 +8,22 @@ function fakeFetch(responses) {
     calls.push({ url, method: opts.method || 'GET', body: opts.body ? JSON.parse(opts.body) : undefined });
     const r = responses.shift();
     if (!r) throw new Error('unexpected request: ' + (opts.method || 'GET') + ' ' + url);
-    return { ok: (r.status || 200) < 300, status: r.status || 200, json: async () => r.json };
+    return { ok: (r.status || 200) < 300, status: r.status || 200, headers: { get: (k) => (r.headers || {})[k.toLowerCase()] ?? null }, json: async () => r.json };
   };
   fn.calls = calls;
   return fn;
 }
 const card = { results: [{ id: 'card1', created_time: '', properties: { Key: { rich_text: [{ plain_text: 'V3-1' }] }, Ticket: { title: [{ plain_text: 'V3-1 t' }] }, Status: { select: { name: 'Inbox' } }, Order: { number: 1 } } }], has_more: false };
 async function run(args, responses, file = '# Hello\n\nbody') {
-  const out = [], err = [];
+  const out = [], err = [], sleeps = [];
   const fetch = fakeFetch(responses);
   const code = await main(args, {
     env: { NOTION_TOKEN: 'tok', GAUNTLET_QUEUE_DB: 'db1' }, fetch,
     readFile: (p) => { if (p === 'missing.md') throw Object.assign(new Error('nope'), { code: 'ENOENT' }); return file; },
+    sleep: async (ms) => { sleeps.push(ms); },
     out: (s) => out.push(s), err: (s) => err.push(s),
   });
-  return { code, out: out.join('\n'), err: err.join('\n'), calls: fetch.calls };
+  return { code, out: out.join('\n'), err: err.join('\n'), calls: fetch.calls, sleeps };
 }
 
 test('body: deletes old non-page blocks, keeps sub-pages, appends new blocks', async () => {
@@ -73,7 +74,7 @@ test('a failed append deletes nothing', async () => {
   const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
     { json: card },
     { json: { results: [{ id: 'b1', type: 'paragraph' }], has_more: false } },
-    { status: 500, json: { message: 'boom' } }, // PATCH append fails
+    ...Array.from({ length: 5 }, () => ({ status: 500, json: { message: 'boom' } })), // PATCH append fails on every attempt
   ]);
   assert.equal(r.code, 3);
   assert.ok(!r.calls.some((c) => c.method === 'DELETE'), 'no DELETE sent');
@@ -110,4 +111,82 @@ test('missing file is bad input and makes no request', async () => {
 test('unknown key exits 1', async () => {
   const r = await run(['page', '--key', 'V3-9', '--file', 'x.md'], [{ json: { results: [], has_more: false } }]);
   assert.equal(r.code, 1);
+});
+
+test('body replace puts the new body above the sub-page links', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
+    { json: card },
+    { json: { results: [{ id: 'b1', type: 'paragraph' }, { id: 'b2', type: 'paragraph' }, { id: 'sp', type: 'child_page', child_page: { title: 'Plan' } }, { id: 'b3', type: 'paragraph' }], has_more: false } },
+    { json: {} }, { json: {} }, { json: {} }, { json: {} },
+  ]);
+  assert.equal(r.code, 0);
+  assert.equal(r.calls[2].method, 'PATCH');
+  assert.equal(r.calls[2].body.after, 'b2', 'inserted after the last body block that sits above the first sub-page');
+  assert.deepEqual(r.calls.slice(3).map((c) => c.method + ' ' + c.url.split('/').pop()), ['DELETE b1', 'DELETE b2', 'DELETE b3']);
+});
+
+test('several chunks above a sub-page keep their order (sent last-first, same anchor)', async () => {
+  const md = Array.from({ length: 230 }, (_, i) => `- item ${i}`).join('\n');
+  const r = await run(['page', '--key', 'V3-1', '--file', 'big.md'], [
+    { json: card },
+    { json: { results: [{ id: 'b1', type: 'paragraph' }, { id: 'sp', type: 'child_page', child_page: { title: 'Plan' } }], has_more: false } },
+    { json: {} }, { json: {} }, { json: {} }, { json: {} },
+  ], md);
+  const appends = r.calls.filter((c) => c.method === 'PATCH');
+  assert.ok(appends.every((c) => c.body.after === 'b1'));
+  assert.deepEqual(appends.map((c) => c.body.children.length), [30, 100, 100]);
+  assert.equal(appends[0].body.children[29].bulleted_list_item.rich_text[0].text.content, 'item 229');
+  assert.equal(appends[2].body.children[0].bulleted_list_item.rich_text[0].text.content, 'item 0');
+});
+
+test('no sub-pages: plain append in order, no after', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
+    { json: card }, { json: { results: [{ id: 'b1', type: 'paragraph' }], has_more: false } }, { json: {} }, { json: {} },
+  ]);
+  assert.equal(r.calls[2].body.after, undefined);
+});
+
+test('append requests are also split to stay under 400000 bytes', async () => {
+  // 5 code blocks of 90 rich_text items (~180KB each): few blocks, many bytes
+  const big = Array.from({ length: 5 }, (_, i) => '```\n' + String(i).repeat(2000 * 90) + '\n```').join('\n');
+  const r = await run(['page', '--key', 'V3-1', '--file', 'big.md'], [
+    { json: card }, { json: { results: [], has_more: false } }, ...Array.from({ length: 5 }, () => ({ json: {} })),
+  ], big);
+  assert.equal(r.code, 0);
+  const appends = r.calls.filter((c) => c.method === 'PATCH');
+  assert.ok(appends.length >= 3, 'split by size, not just by count (5 blocks < 100)');
+  for (const c of appends) assert.ok(Buffer.byteLength(JSON.stringify(c.body)) < 400000);
+  assert.equal(appends.reduce((n, c) => n + c.body.children.length, 0), 5);
+});
+
+test('429 then 200 succeeds after a retry', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
+    { status: 429, json: { message: 'slow down' } }, { json: card },
+    { json: { results: [], has_more: false } }, { json: {} },
+  ]);
+  assert.equal(r.code, 0);
+  assert.equal(r.sleeps.length, 1);
+});
+
+test('Retry-After (seconds) sets the wait', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [
+    { status: 429, headers: { 'retry-after': '7' }, json: {} }, { status: 503, headers: { 'retry-after': '2' }, json: {} }, { json: card },
+    { json: { results: [], has_more: false } }, { json: {} },
+  ]);
+  assert.equal(r.code, 0);
+  assert.deepEqual(r.sleeps, [7000, 2000]);
+});
+
+test('five failed attempts give up with exit 3 and no sixth request', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], Array.from({ length: 5 }, () => ({ status: 502, json: { message: 'bad gateway' } })));
+  assert.equal(r.code, 3);
+  assert.match(r.err, /HTTP 502/);
+  assert.equal(r.calls.length, 5);
+  assert.equal(r.sleeps.length, 4);
+});
+
+test('a 4xx other than 429 is not retried', async () => {
+  const r = await run(['page', '--key', 'V3-1', '--file', 'ticket.md'], [{ status: 401, json: { message: 'no' } }]);
+  assert.equal(r.code, 3);
+  assert.equal(r.sleeps.length, 0);
 });
