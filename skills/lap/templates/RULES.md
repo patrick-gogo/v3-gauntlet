@@ -68,14 +68,41 @@ Classify each red: **product** (a ticket's code is wrong) → back to 2.3 for th
 ### 2.8 Exit pair
 Two green runs in a row on the same build end the round. Green = no new reds against the baseline and every browser check passing. If the stop time arrives first, record how far you got.
 
+### 2.8b Final review
+For each ticket that would be Ready, after its exit pair (or after 2.4 when its exit pair is `none`), review the final branch `$BASE..devbox/<lap>/<branch>` once more, the way the owner reviews their own work before a PR. This replaces the review the owner would otherwise run on push day, so do it fully even when 2.4 passed.
+1. **Panel:** four fresh read-only helpers, each on one lens, each returning findings only (section 7 format, no verdict): **conventions** (follow the "Project conventions review" section when present, else the House rules), **correctness** (logic, edge cases, error handling, races, data loss in the changed hunks), **history** (`git log` and `git blame` of the touched lines: does the change undo an earlier fix or contradict a recent one), **in-file guidance** (the comments, docstrings and types in the touched files: does the change break what they state).
+2. **Impact trace (you):** list what changed with reach beyond its file (exported symbols, API shapes, schema, config, task registration), grep for every consumer, open the most affected ones, and record each as break, behaviour change or harmless, verified or suspected.
+3. **Filter:** a finding is in scope only if reverting this ticket makes it go away, and real only if it can fire in the project's actual setup. Everything else goes to Out of scope. Tag each surviving finding **fix-here** (same class of work, files this ticket touches), **fix-elsewhere** (a follow-up) or **verify-at-deploy** (depends on data or environment you cannot see; give the check).
+4. **Fix:** a fix-here Critical or Important gets one fix round (new helper, failing test first), the gates once more, then steps 1-3 again on the new tip. Still open after that: the ticket is Needs you.
+5. **Write** `docs/gauntlet/<lap>/tickets/<id>/final-review.md`:
+   ```
+   ---
+   key: <id>
+   type: review-mine
+   reviewed_at: <YYYY-MM-DD>
+   branch: <branch from tickets.tsv, without devbox/<lap>/>
+   head_sha: <first 8 characters of the reviewed tip>
+   passes: quality+impact
+   verdict: <Ship as-is | Fix before merge: ...>
+   ---
+   # <id>: final review (<date>)
+   ## TL;DR      (counts: bugs by severity, concerns, nits, blast radius, filtered out)
+   ## Bugs       (fix-here first; each with trigger, expected, actual)
+   ## Concerns
+   ## Nits
+   ## Out of scope
+   ## Impact
+   ```
+   `head_sha` must be the tip the panel reviewed; any later commit on the ticket branch means the review is redone. Ledger `final review <id> <verdict>`.
+
 ### 2.9 Handoff
-Write `docs/gauntlet/<lap>-handoff.md` (format in section 8) and commit it, the ledger, `baseline.md` and the logs on **this job's own branch** (never on a ticket branch). Run `docker compose down` (no `-v`), remove the `/tmp` worktrees and the `origin/<base_branch>` ref (`git update-ref -d refs/remotes/origin/<base_branch>`), keeping the branches. Your final summary to the board: one line per ticket with its status, then "handoff: docs/gauntlet/<lap>-handoff.md".
+Write `docs/gauntlet/<lap>-handoff.md` (format in section 8) and commit it, the ledger, `baseline.md`, the logs and each ticket's `final-review.md` on **this job's own branch** (never on a ticket branch). Run `docker compose down` (no `-v`), remove the `/tmp` worktrees and the `origin/<base_branch>` ref (`git update-ref -d refs/remotes/origin/<base_branch>`), keeping the branches. Your final summary to the board: one line per ticket with its status, then "handoff: docs/gauntlet/<lap>-handoff.md".
 
 ## 3. Round 2 (a follow-up from the owner)
 The owner answers through Follow-up in the same session. Each answer that asks for a change becomes new tasks on that ticket's branch (test-first), then 2.4 to 2.9 again, writing `docs/gauntlet/<lap>-handoff-r2.md`. "push" is not for you: tell the owner the branches are ready for push day on the laptop.
 
 ## 4. Statuses (one per ticket in the handoff)
-- **Ready:** every AC met with evidence, ticket review PASS, exit pair green, no open T2 or T3 ruling.
+- **Ready:** every AC met with evidence, ticket review PASS, exit pair green (or `none`), final review written with no open fix-here Critical or Important, no open T2 or T3 ruling.
 - **Needs you:** anything else: a blocker, an open Critical or Important, an open T2 or T3 ruling, a failed exit pair, or not reached before the stop time.
 
 ## 5. Budgets
@@ -113,8 +140,8 @@ Location: file:line / Trigger: concrete input or action / Expected: ... / Actual
 To accept every pick: <the reply, e.g. "1-4 keep 5 yes">
 
 ## 1. Tickets
-| Ticket | Status | Branch | Commits | Review | Exit pair |
-| <id> | Ready / Needs you: <reason> | devbox/<lap>/<branch> | n | PASS / FAIL | green / not run |
+| Ticket | Status | Branch | Commits | Review | Exit pair | Final review |
+| <id> | Ready / Needs you: <reason> | devbox/<lap>/<branch> | n | PASS / FAIL | green / not run | <verdict>, head <sha8> / not run |
 
 ## 2. Evidence
 Baseline known reds; per ticket the RED -> GREEN tests per task; gates per run vs baseline;

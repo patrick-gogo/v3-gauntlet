@@ -16,4 +16,4 @@ Read `docs/gauntlet/RULES.md` first. You are the lead: plan the lap, run helpers
 Each ticket's folder: `docs/gauntlet/{lap}/tickets/<id>/` (ticket, bar, context, design, plan, rulings, scope, state).
 
 ## Done means
-Every ticket is Ready or Needs you with a reason, the handoff `docs/gauntlet/{lap}-handoff.md` is committed on this job's branch, the stack is down, and your final summary lists each ticket's status.
+Every ticket is Ready or Needs you with a reason, every Ready ticket has `docs/gauntlet/{lap}/tickets/<id>/final-review.md` (RULES 2.8b), the handoff `docs/gauntlet/{lap}-handoff.md` is committed on this job's branch, the stack is down, and your final summary lists each ticket's status.
