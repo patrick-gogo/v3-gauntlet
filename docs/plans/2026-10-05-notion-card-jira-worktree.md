@@ -520,8 +520,8 @@ git commit -m "docs: describe the queue card, tracker status and worktree option
 
 ### Task 7: Lap 1 lessons
 
-Lap 1 (V3-2475, 2026-10-05) worked end to end and showed six fixes. Decisions:
-- **Author:** the devbox commits as its default user (`patrick <patrick@devbox.local>`). The brief carries the laptop's `git config user.name` / `user.email`, and the lead sets them in every worktree at GO. `lap-check.sh --author <email>` refuses a branch with any commit by another author. Push day re-authors unpublished lap commits only when `--author` fails and nothing else does.
+Lap 1 (2026-10-05) worked end to end and showed six fixes. Decisions:
+- **Author:** the devbox commits as its default user (`<user> <user@devbox.local>`). The brief carries the laptop's `git config user.name` / `user.email`, and the lead sets them in every worktree at GO. `lap-check.sh --author <email>` refuses a branch with any commit by another author. Push day re-authors unpublished lap commits only when `--author` fails and nothing else does.
 - **No attribution in the rails:** the lead told a helper to add a co-author trailer and had to amend it out; the rule was only in the project's house rules. It becomes rail 13 of `RULES.md`.
 - **`origin/<base>` for tools:** the devbox has no remote; the frontend ratchet needs `refs/remotes/origin/master`. At GO the lead creates `refs/remotes/origin/<base_branch>` at `BASE` and deletes it at cleanup.
 - **Baseline runs every gate**, browser checks included, on `BASE` (lap 1 skipped the smoke test on the base).
@@ -606,5 +606,5 @@ git commit -m "fix: apply lap 1 lessons (commit identity, no attribution rail, o
 ---
 
 ## After execution (not code)
-- Backfill V3-2475: `page` its ticket, design, plan and rulings onto its card; move its tracker ticket to In Progress.
+- Backfill the lap 1 ticket: `page` its ticket, design, plan and rulings onto its card; move its tracker ticket to In Progress.
 - When lap 1 returns, `/v3-lap result` writes the first Handoff sub-page.
