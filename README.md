@@ -4,6 +4,25 @@ An unattended ticket pipeline for Claude Code, packaged as a plugin. Forked from
 [beefysalad/patrick-workflows](https://github.com/beefysalad/patrick-workflows) and being fitted to one
 work project. The plan is to run it unattended on a Linux host.
 
+**Interactive flow:** [patrick-gogo.github.io/v3-gauntlet](https://patrick-gogo.github.io/v3-gauntlet/) (the Pac-Man board; click any step).
+
+## How it fits together
+
+**Architecture.** Two machines. The laptop holds every token and talks to Notion, Jira, GitHub and the chat
+drafts; the devbox only sees repo files and sends work back as branches.
+
+![Architecture: the laptop (plugin, ticket workspace, private config, clean temporary worktree) and the devbox (lead agent, helpers and critics, Docker stack, ticket branches), with the lap push, follow-up rounds and fetch between them, and the outside services reached from the laptop only](docs/diagrams/architecture.png)
+
+**The flow.** Day on the laptop (plan, rulings, queue, start the lap), night on the devbox (build, review,
+wave, run, exit pair, handoff), morning on the laptop (result, answer, push).
+
+![The flow board: 18 steps across Day, Night and Morning lanes, with the step detail panel](docs/diagrams/flow-board.png)
+
+**Ticket lifecycle.** The Notion card's columns. A change answer or a push-day finding loops back to Running
+as round 2 or 3, in the same lap; only your "push" moves a ticket to PR open.
+
+![Ticket lifecycle: Inbox, Planned, Queued, Running, Ready or Needs you, PR open, Done, with the round loop back to Running](docs/diagrams/ticket-lifecycle.png)
+
 ## Install
 
 ```
