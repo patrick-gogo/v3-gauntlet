@@ -70,15 +70,38 @@ EOF
 fi
 is_push || is_commit || exit 0
 TW="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../skills/ticket-workspace/scripts"
-br=$(git -C "$dir" branch --show-current 2>/dev/null) || exit 0
-if [ -z "$br" ] && is_push; then
-  # Detached HEAD (a temporary push worktree): the branch pushed is the refspec's destination.
-  # Read from "shape": quoted text (such as a -C path holding the word push) is already removed.
-  br=$(printf '%s\n' "$shape" | perl -ne '
-    if (/\bpush\b([^;&|\n]*)/) { my @a = grep { !/^-/ } map { s/^["\x27]|["\x27]$//gr } split " ", $1;
-      if (@a >= 2) { my $d = $a[1]; $d =~ s/^\+//; $d =~ s/^.*://; $d =~ s{^refs/heads/}{}; print $d; exit } }' 2>/dev/null)
+cur=$(git -C "$dir" branch --show-current 2>/dev/null) || exit 0
+# pushbrs: the branches this push updates, one per line. Each refspec names its destination
+# (<src>:<dst> -> dst, a bare name -> itself, HEAD -> the current branch); no refspec means the current branch.
+# Parsed from "shape" starting at the git command itself, so quoted text and -C/-c values never pass for "push".
+pushbrs=""
+if is_push; then
+  pushbrs=$(printf '%s\n' "$shape" | CUR="$cur" perl -0777 -ne '
+    my $cur = $ENV{CUR};
+    my $opt = qr/(?:-[Cc]\s+[^\s;&|]*|--[a-z][a-z-]*(?:=[^\s;&|]*)?|-[a-zA-Z])/;
+    my $s = $_;
+    while ($s =~ /(?:^|[;&|(`{])[ \t]*(?:env\s+)?(?:[A-Za-z_]\w*=\S*\s+)*git(?:\s+$opt)*\s+push\b([^;&|\n]*)/gm) {
+      my @t = split " ", $1; my @refs; my $remote; my $seen = 0;
+      while (@t) {
+        my $a = shift @t;
+        if ($a =~ /^-/) { shift @t if $a =~ /^(?:-o|--push-option|--repo|--receive-pack|--exec)$/ && @t; next }
+        if (!$seen) { $seen = 1; next }
+        push @refs, $a;
+      }
+      my @out;
+      for my $r (@refs) {
+        $r =~ s/^\+//;
+        my $d = $r =~ /:/ ? ($r =~ s/^.*://r) : $r;
+        $d =~ s{^refs/heads/}{};
+        $d = $cur if $d eq "HEAD";
+        push @out, $d if length $d;
+      }
+      @out = ($cur) if !@refs && length $cur;
+      print "$_\n" for @out;
+    }' 2>/dev/null)
 fi
-[ -n "$br" ] || exit 0
+if [ -z "$pushbrs" ] && [ -z "$cur" ]; then exit 0; fi
+br=$cur
 list=$(cd "$dir" && bash "$TW/ticket-ws.sh" list 2>/dev/null) || exit 0
 [ -n "$list" ] || exit 0
 PRE_PR=" intake designed planned approved implementing reviewing fixing ready blocked handoff round2 "
@@ -89,13 +112,14 @@ while IFS=$tab read -r id phase; do
   ws=$(cd "$dir" && bash "$TW/ticket-ws.sh" path "$id" 2>/dev/null) || continue
   st="$ws/state.md"; [ -f "$st" ] || continue
   tbranch=$(bash "$TW/state.sh" "$st" get branch 2>/dev/null)
-  if is_push && [ "$tbranch" = "$br" ]; then
+  if is_push && printf '%s
+' "$pushbrs" | grep -qxF -e "$tbranch"; then
     case $PRE_PR in *" $phase "*)
       [ "$(bash "$TW/state.sh" "$st" get push_approved 2>/dev/null)" = yes ] ||
         block "ticket $id is in phase $phase: push only from /v3-ticket's SHIP step, after the user approves the PR." ;;
     esac
   fi
-  if is_commit && [ "$(bash "$TW/state.sh" "$st" get base_branch 2>/dev/null)" = "$br" ]; then
+  if is_commit && [ -n "$br" ] && [ "$(bash "$TW/state.sh" "$st" get base_branch 2>/dev/null)" = "$br" ]; then
     case $IN_BUILD in *" $phase "*)
       block "ticket $id is in progress on branch $tbranch, based on $br: commit on $tbranch, not on $br." ;;
     esac
