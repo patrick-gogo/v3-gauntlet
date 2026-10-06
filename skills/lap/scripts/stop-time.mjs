@@ -7,12 +7,19 @@ function partsIn(ms, tz) {
   return { date: `${p.year}-${p.month}-${p.day}`, minutes: Number(p.hour) * 60 + Number(p.minute) };
 }
 
+function nextDate(ymd) {
+  const [y, mo, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, mo - 1, d + 1)).toISOString().slice(0, 10);
+}
+
 export function nextStop(nowMs, hhmm, tz) {
+  if (!tz) throw new Error('usage: stop-time.mjs HH:MM <IANA zone>: the time zone is required');
   const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(hhmm);
   if (!m) throw new Error(`bad time: ${hhmm}`);
   const target = Number(m[1]) * 60 + Number(m[2]);
   const now = partsIn(nowMs, tz); // throws RangeError for an unknown zone
-  const day = now.minutes < target ? now.date : partsIn(nowMs + 24 * 3600 * 1000, tz).date;
+  // Tomorrow is the next calendar date in the zone, not now + 24h (a DST day is 23 or 25 hours long).
+  const day = now.minutes < target ? now.date : nextDate(now.date);
   return `${day} ${hhmm}`;
 }
 

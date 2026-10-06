@@ -19,3 +19,18 @@ test('bad input throws', () => {
   assert.throws(() => nextStop(Date.now(), '25:00', 'Asia/Manila'));
   assert.throws(() => nextStop(Date.now(), '06:30', 'Not/AZone'));
 });
+test('fall-back day (25 hours): tomorrow is the next calendar date', () => {
+  // 00:30 EDT on 2026-11-01; adding 24h would land at 23:30 EST the same day.
+  assert.equal(nextStop(at('2026-11-01T04:30:00Z'), '00:15', 'America/New_York'), '2026-11-02 00:15');
+});
+test('spring-forward day (23 hours): tomorrow is the next calendar date', () => {
+  // 01:30 EST on 2026-03-08, stop 01:00.
+  assert.equal(nextStop(at('2026-03-08T06:30:00Z'), '01:00', 'America/New_York'), '2026-03-09 01:00');
+});
+test('month and year ends roll over', () => {
+  assert.equal(nextStop(at('2026-12-31T20:00:00Z'), '06:30', 'Asia/Manila'), '2027-01-01 06:30'); // 04:00 Manila on Jan 1: same day
+  assert.equal(nextStop(at('2026-12-31T05:00:00Z'), '06:30', 'Asia/Manila'), '2027-01-01 06:30'); // 13:00 Manila Dec 31
+});
+test('a missing zone throws', () => {
+  assert.throws(() => nextStop(Date.now(), '06:30', undefined), /zone/);
+});
