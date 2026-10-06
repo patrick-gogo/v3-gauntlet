@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gauntlet Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#05060f; --maze:#1f3cff; --maze-dim:#14227a; --text:#e9ecff; --muted:#9aa3d6;
@@ -91,9 +92,84 @@
   .notes li{margin:3px 0}
   #mpac{position:absolute;top:7px;width:20px;height:20px;border-radius:50%;background:var(--pac);animation:chomp .22s infinite alternate;transition:left 0s;z-index:2}
   @media (prefers-reduced-motion:reduce){#pac,#mpac,.ghost,.dot.pellet{animation:none}#pac{transition:none}}
+
+  /* layout: contents column + one content column */
+  .page{max-width:1500px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:28px}
+  .toc{position:sticky;top:0;align-self:start;padding:26px 0}
+  .toc-title{color:var(--pac);font-weight:700;letter-spacing:3px;font-size:13px;margin:0 0 10px 10px}
+  .toc ol{list-style:none;margin:0;padding:0}
+  .toc a{display:flex;gap:10px;padding:7px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:14px;border:2px solid transparent}
+  .toc a span{color:var(--pac)}
+  .toc a:hover,.toc a.on{color:var(--text);border-color:var(--maze);background:var(--panel)}
+  .content{min-width:0}
+  .content > header,.content > main,.content > footer,.content > section{max-width:none;margin-left:0;margin-right:0;padding-left:0;padding-right:0}
+  section,main{scroll-margin-top:16px}
+  .content > #multi,.content > #laps{max-width:none;margin:0 0 30px;padding:0}
+  .content > section.block{padding:26px 18px 18px;margin:18px 0 30px}
+  /* readable prose in panels */
+  .panel ul,.panel p,.step,.notes,.block .sub,#multi .sub,#laps .sub{font-family:"Atkinson Hyperlegible",system-ui,sans-serif}
+  .panel ul{font-size:15px;line-height:1.6;color:var(--text)}
+  .panel li{margin:6px 0}
+  .panel h2{font-size:16px;letter-spacing:1px}
+  .step{font-size:14.5px;line-height:1.55} .notes{font-size:14.5px}
+  /* reference blocks */
+  #words{margin:0 0 30px}
+  #words ul{columns:2;column-gap:36px} #words li{break-inside:avoid}
+  .refs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:0 0 30px}
+  /* diagram blocks */
+  .block{border:3px solid var(--maze);border-radius:14px;background:var(--day);padding:26px 18px 18px;position:relative;margin:18px 0 30px}
+  .block h2{position:absolute;top:-14px;left:16px;margin:0;background:var(--bg);padding:0 8px;color:var(--pac);font-size:16px;letter-spacing:1px}
+  .block .sub{margin:0 0 12px;font-size:15px}
+  .diagram{width:100%;height:auto;display:block}
+  .diagram .zone{fill:#0b1530;stroke:var(--maze);stroke-width:2}
+  .diagram .zone.night{fill:#070818}
+  .diagram .zl{fill:var(--pac);font:700 13px ui-monospace,Consolas,monospace;letter-spacing:2px}
+  .diagram .box{fill:#090c22;stroke:#2c47ff;stroke-width:1.5}
+  .diagram .box.dim{stroke-dasharray:5 4;opacity:.75}
+  .diagram .bt{fill:var(--text);font:700 15px ui-monospace,Consolas,monospace}
+  .diagram .bs{fill:var(--muted);font:13px "Atkinson Hyperlegible",system-ui,sans-serif}
+  .diagram .wall{stroke:var(--maze);stroke-width:2;stroke-dasharray:3 7}
+  .diagram .arr{stroke:var(--pac);stroke-width:2.5;fill:none}
+  .diagram .arr.b{stroke:var(--ghost3)} .diagram .arr.p{stroke:var(--spike);stroke-dasharray:7 5}
+  .diagram .al{fill:var(--pac);font:700 13px ui-monospace,Consolas,monospace}
+  .diagram .al.b{fill:var(--ghost3)} .diagram .al.p{fill:var(--spike)}
+  .diagram .svc rect{fill:var(--panel);stroke:var(--maze-dim);stroke-width:2}
+  .diagram .st rect{fill:#090c22;stroke:#2c47ff;stroke-width:2}
+  .diagram .st rect.hot{stroke:var(--pac)} .diagram .st rect.ok{stroke:var(--ok)}
+  .diagram .st text{fill:var(--text);font:700 14px ui-monospace,Consolas,monospace}
+  .diagram .lnk path{stroke:var(--pac);stroke-width:2;fill:none}
+  .diagram .loopp{stroke:var(--spike);stroke-width:2.5;fill:none;stroke-dasharray:7 5}
+  .diagram .tags text{fill:var(--muted);font:12.5px "Atkinson Hyperlegible",system-ui,sans-serif}
+  @media (max-width:1100px){
+    .page{grid-template-columns:minmax(0,1fr);gap:0}
+    .toc{position:sticky;top:0;z-index:4;background:var(--bg);padding:8px 0;border-bottom:2px solid var(--maze-dim)}
+    .toc-title{display:none}
+    .toc ol{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+    .toc ol::-webkit-scrollbar{display:none}
+    .toc li{flex:none}
+    .refs{grid-template-columns:1fr}
+    #words ul{columns:1}
+    .dwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    section,main{scroll-margin-top:64px}
+    .diagram{min-width:760px}
+  }
 </style>
 </head>
 <body>
+<div class="page">
+  <nav class="toc" aria-label="Contents">
+    <div class="toc-title">MAP</div>
+    <ol>
+      <li><a href="#arch"><span>01</span>Architecture</a></li>
+      <li><a href="#flow"><span>02</span>The flow</a></li>
+      <li><a href="#life"><span>03</span>Ticket lifecycle</a></li>
+      <li><a href="#laps"><span>04</span>Lap vs round</a></li>
+      <li><a href="#multi"><span>05</span>One lap, three tickets</a></li>
+      <li><a href="#words"><span>06</span>Words</a></li>
+      <li><a href="#rulings"><span>07</span>Rules and facts</a></li>
+    </ol>
+  </nav>
+  <div class="content">
 <header>
   <h1>v3-gauntlet &times; devbox</h1>
   <div class="sub">You plan by day on the laptop. The devbox lead builds and tests by night from files in docs/gauntlet/. You answer and say "push" in the morning. Click any box, or press Play.</div>
@@ -114,54 +190,134 @@
   </div>
 </header>
 
-<main>
+<section id="arch" class="block" aria-label="Architecture">
+  <h2>ARCHITECTURE</h2>
+  <div class="sub">Two machines. The laptop holds every token and talks to the outside world. The devbox only ever sees repo files and sends work back as branches.</div>
+  <div class="dwrap"><svg class="diagram" viewBox="0 0 1000 560" role="img" aria-label="System map: the laptop runs Claude Code with the v3-gauntlet plugin, the ticket workspace, the private config and a clean temporary worktree, and talks to Notion, Jira, GitHub and the chat drafts. The devbox runs the lead agent, its helpers and critics, the Docker stack and the ticket branches. The laptop pushes the lap files and starts the lead, sends follow-ups for later rounds, and fetches the branches, handoff and final review back.">
+    <defs>
+      <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ffd400"/></marker>
+      <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#00e5ff"/></marker>
+      <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ff5fa2"/></marker>
+    </defs>
+    <rect x="16" y="30" width="400" height="380" rx="16" class="zone"/>
+    <text x="36" y="22" class="zl">YOUR LAPTOP</text>
+    <rect x="40" y="56" width="352" height="74" rx="10" class="box"/>
+    <text x="56" y="84" class="bt">Claude Code + v3-gauntlet plugin</text>
+    <text x="56" y="108" class="bs">/v3-ticket · /v3-lap result · answer · push</text>
+    <rect x="40" y="146" width="168" height="74" rx="10" class="box"/>
+    <text x="54" y="174" class="bt">Ticket workspace</text>
+    <text x="54" y="198" class="bs">plan · rulings · state</text>
+    <rect x="224" y="146" width="168" height="74" rx="10" class="box"/>
+    <text x="238" y="174" class="bt">Private config</text>
+    <text x="238" y="198" class="bs">gates · stack · rules</text>
+    <rect x="40" y="236" width="352" height="74" rx="10" class="box"/>
+    <text x="56" y="264" class="bt">Clean temporary worktree</text>
+    <text x="56" y="288" class="bs">packs a lap · pushes a ticket</text>
+    <rect x="40" y="326" width="352" height="64" rx="10" class="box dim"/>
+    <text x="56" y="352" class="bt">Your main checkout</text>
+    <text x="56" y="374" class="bs">never touched: other agents can work here</text>
+    <rect x="584" y="30" width="400" height="380" rx="16" class="zone night"/>
+    <text x="604" y="22" class="zl">DEVBOX · 24/7</text>
+    <rect x="608" y="56" width="352" height="74" rx="10" class="box"/>
+    <text x="624" y="84" class="bt">Lead agent</text>
+    <text x="624" y="108" class="bs">reads RULES.md + the lead brief</text>
+    <rect x="608" y="146" width="352" height="74" rx="10" class="box"/>
+    <text x="624" y="174" class="bt">Helpers and critics</text>
+    <circle cx="880" cy="170" r="9" fill="#ff3b3b"/><circle cx="904" cy="170" r="9" fill="#ffb8ff"/><circle cx="928" cy="170" r="9" fill="#00e5ff"/>
+    <text x="624" y="198" class="bs">a fresh agent per task, review and lens</text>
+    <rect x="608" y="236" width="352" height="74" rx="10" class="box"/>
+    <text x="624" y="264" class="bt">Docker stack</text>
+    <text x="624" y="288" class="bs">db · api · frontend · gates · browser</text>
+    <rect x="608" y="326" width="352" height="64" rx="10" class="box"/>
+    <text x="624" y="352" class="bt">Ticket branches</text>
+    <text x="624" y="374" class="bs">devbox/&lt;lap&gt;/&lt;branch&gt; + handoff</text>
+    <line x1="500" y1="30" x2="500" y2="410" class="wall"/>
+    <text x="500" y="432" text-anchor="middle" class="bs">no tokens cross this line</text>
+    <path d="M416 92 L584 92" class="arr" marker-end="url(#ah)"/>
+    <text x="500" y="80" text-anchor="middle" class="al">push lap files, start lead</text>
+    <path d="M416 186 L584 186" class="arr p" marker-end="url(#ahp)"/>
+    <text x="500" y="174" text-anchor="middle" class="al p">follow-up: round 2, 3</text>
+    <path d="M584 356 L416 272" class="arr b" marker-end="url(#ahb)"/>
+    <text x="500" y="236" text-anchor="middle" class="al b">fetch branches,</text>
+    <text x="500" y="252" text-anchor="middle" class="al b">handoff, final review</text>
+    <text x="16" y="472" class="zl">OUTSIDE · REACHED FROM THE LAPTOP ONLY</text>
+    <g class="svc">
+      <rect x="16" y="486" width="226" height="58" rx="10"/><text x="129" y="510" text-anchor="middle" class="bt">Notion queue</text><text x="129" y="531" text-anchor="middle" class="bs">cards · plan · handoff</text>
+      <rect x="258" y="486" width="226" height="58" rx="10"/><text x="371" y="510" text-anchor="middle" class="bt">Jira</text><text x="371" y="531" text-anchor="middle" class="bs">ticket · status · PR note</text>
+      <rect x="500" y="486" width="226" height="58" rx="10"/><text x="613" y="510" text-anchor="middle" class="bt">GitHub</text><text x="613" y="531" text-anchor="middle" class="bs">push day only · draft PR</text>
+      <rect x="742" y="486" width="242" height="58" rx="10"/><text x="863" y="510" text-anchor="middle" class="bt">Chat drafts</text><text x="863" y="531" text-anchor="middle" class="bs">review request draft</text>
+    </g>
+  </svg></div>
+</section>
+
+<main id="flow">
   <section id="board" aria-label="Flow board">
     <div id="pac" aria-hidden="true"></div>
   </section>
   <aside>
     <div class="panel" id="detail" aria-live="polite"></div>
-    <div class="panel">
-      <h2>Words</h2>
-      <ul>
-        <li><b>Lap</b>: one <code>/v3-lap</code> = one devbox session for a set of tickets, from packing until push day. It has one id (<code>lap-20261006-0944</code>) and its tickets keep their branches for the whole lap.</li>
-        <li><b>Round</b>: one build-review-test pass inside a lap, ending in a handoff. Round 1 is the first night. Every change you ask for afterwards (from your answers, or from the push-day review) is a <b>follow-up</b> to the same session: round 2, round 3, on the same branches. A new round is never a new lap.</li>
-        <li><b>New lap</b>: only when you send new tickets with <code>/v3-lap</code>.</li>
-        <li><b>Wave</b>: every branch merged and deployed to the stack once.</li>
-        <li><b>Run</b>: one pass of the Playwright matrix, about 14 minutes.</li>
-        <li><b>Exit pair</b>: two green runs in a row on the same build.</li>
-      </ul>
-    </div>
-    <div class="panel">
-      <h2>Ruling levels</h2>
-      <ul>
-        <li><b>T1</b> obvious fix (text, typo, CSS nudge): the loop decides.</li>
-        <li><b>T2</b> a choice the shop makes (required or optional, limits, defaults): goes ahead with a pick, flagged for the PM before push.</li>
-        <li><b>T3</b> business decision (new feature, money, tax): flagged for a full talk with the PM.</li>
-        <li>Unsure between T1 and T2? Treat it as T2.</li>
-      </ul>
-    </div>
-    <div class="panel">
-      <h2>House rules in the space</h2>
-      <ul>
-        <li>One heavy thing at a time: builds, the matrix and pytest take turns.</li>
-        <li>Check the stack is free first: <code>pgrep -f "playwright test|exit-pair|deploy-api|build-next"</code></li>
-        <li>Anything over 10 minutes runs detached.</li>
-        <li>Unclear? Write a ruling and keep going.</li>
-      </ul>
-    </div>
-    <div class="panel">
-      <h2>Devbox spike results</h2>
-      <ul>
-        <li>Stack, backend tests, ruff ratchet, frontend build and Playwright smoke all ran unattended.</li>
-        <li>No plugins in the space: the lap rules travel as <code>docs/gauntlet/RULES.md</code>.</li>
-        <li>Uncommitted laptop edits arrive inside a snapshot commit, so laps are packed from a clean copy at master.</li>
-        <li>Only <code>devbox/...</code> branches come home: ticket branches are <code>devbox/&lt;lap&gt;/&lt;branch&gt;</code>.</li>
-        <li>No GitHub access and no Notion token in the space: push day and board updates run on the laptop.</li>
-        <li>12 GB RAM, no swap: one heavy thing at a time.</li>
-      </ul>
-    </div>
   </aside>
 </main>
+
+<section id="life" class="block" aria-label="Ticket lifecycle">
+  <h2>TICKET LIFECYCLE</h2>
+  <div class="sub">The columns of the Notion card, left to right. A round loops back to Running and never skips push day.</div>
+  <div class="dwrap"><svg class="diagram" viewBox="0 0 1000 250" role="img" aria-label="States: Inbox, Planned, Queued, Running, then Ready or Needs you, then PR open, then Done. From Ready or Needs you, a change answer or a push-day finding loops back to Running as round 2 or 3. Only your word moves a ticket from Ready to PR open.">
+    <defs>
+      <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffd400"/></marker>
+      <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ff5fa2"/></marker>
+    </defs>
+    <g class="st">
+      <rect x="10" y="120" width="104" height="54" rx="27"/><text x="62" y="152" text-anchor="middle">Inbox</text>
+      <rect x="150" y="120" width="112" height="54" rx="27"/><text x="206" y="152" text-anchor="middle">Planned</text>
+      <rect x="298" y="120" width="112" height="54" rx="27"/><text x="354" y="152" text-anchor="middle">Queued</text>
+      <rect x="446" y="120" width="116" height="54" rx="27" class="hot"/><text x="504" y="152" text-anchor="middle">Running</text>
+      <rect x="598" y="120" width="124" height="54" rx="27"/><text x="660" y="145" text-anchor="middle">Ready /</text><text x="660" y="164" text-anchor="middle">Needs you</text>
+      <rect x="758" y="120" width="112" height="54" rx="27"/><text x="814" y="152" text-anchor="middle">PR open</text>
+      <rect x="902" y="120" width="88" height="54" rx="27" class="ok"/><text x="946" y="152" text-anchor="middle">Done</text>
+    </g>
+    <g class="lnk">
+      <path d="M114 147 L146 147" marker-end="url(#ah2)"/><path d="M262 147 L294 147" marker-end="url(#ah2)"/>
+      <path d="M410 147 L442 147" marker-end="url(#ah2)"/><path d="M562 147 L594 147" marker-end="url(#ah2)"/>
+      <path d="M722 147 L754 147" marker-end="url(#ah2)"/><path d="M870 147 L898 147" marker-end="url(#ah2)"/>
+    </g>
+    <path d="M660 118 C 650 46, 520 46, 510 114" class="loopp" marker-end="url(#ah3)"/>
+    <text x="585" y="36" text-anchor="middle" class="al p">round 2, 3: a change answer or a push-day finding</text>
+    <g class="tags">
+      <text x="62" y="200" text-anchor="middle">you add it</text>
+      <text x="206" y="200" text-anchor="middle">/v3-ticket</text>
+      <text x="354" y="200" text-anchor="middle">you drag it</text>
+      <text x="504" y="200" text-anchor="middle">/v3-lap · devbox</text>
+      <text x="660" y="200" text-anchor="middle">/v3-lap result</text>
+      <text x="814" y="200" text-anchor="middle">"push"</text>
+      <text x="946" y="200" text-anchor="middle">merged</text>
+    </g>
+    <text x="500" y="236" text-anchor="middle" class="bs">day: Inbox to Queued · night: Running · morning: Ready to PR open</text>
+  </svg></div>
+</section>
+
+
+
+<section id="laps" aria-label="Lap versus round">
+  <div class="wrap">
+    <h2>LAP vs ROUND (from a real lap)</h2>
+    <div class="sub">One lap, several rounds. Every round after the first is a follow-up to the same devbox session, on the same branch. Read top to bottom:</div>
+    <div class="steps">
+      <div class="step"><b>Lap starts</b><br><code>/v3-lap</code> packs ticket ABC-123 from a clean copy of master and starts one devbox session: lap <code>lap-20261006-0944</code>, branch <code>devbox/lap-20261006-0944/bugfix/ABC-123-...</code>.</div>
+      <div class="step"><b>Round 1</b> (devbox)<br>Builds test-first, reviews, runs the gates, writes the handoff. Status: Ready.</div>
+      <div class="step"><b>Result + answers</b> (laptop)<br><code>/v3-lap result</code> brings it home. You answer "1 keep 2 yes". No change asked, so nothing goes back.</div>
+      <div class="step"><b>Push day review</b> (laptop)<br><code>/v3-lap push</code> checks drift and reviews before pushing. It found master had merged a new tax rule from another ticket after round 1 started. Push stopped, nothing pushed.</div>
+      <div class="step"><b>Round 2</b> (devbox, follow-up)<br>The fixes go to the <b>same</b> session as a follow-up: merge master, change one formula, update tests, new handoff. Same lap id, same branch.</div>
+      <div class="step"><b>Round 3, if needed</b><br>If the spec owner rules differently, one more follow-up to the same session. Still the same lap. Then result, answer, push again.</div>
+    </div>
+    <ul class="notes">
+      <li><b>Where a round can start:</b> your handoff answers (<code>/v3-lap answer</code> with a "change"), or the push-day review finding something to fix.</li>
+      <li><b>What never happens in a round:</b> a push. GitHub only sees the branch on push day, after you say "push".</li>
+      <li><b>A finished session can still take a follow-up</b>, so a round can start the next morning or days later.</li>
+      <li><b>New lap</b> = new tickets packed with <code>/v3-lap</code>. Tickets from different laps never share a session.</li>
+    </ul>
+  </div>
+</section>
 
 <section id="multi" aria-label="One lap with three tickets">
   <div class="wrap">
@@ -196,27 +352,54 @@
     </ul>
   </div>
 </section>
-<section id="laps" aria-label="Lap versus round">
-  <div class="wrap">
-    <h2>LAP vs ROUND (from a real lap)</h2>
-    <div class="sub">One lap, several rounds. Every round after the first is a follow-up to the same devbox session, on the same branch. Read top to bottom:</div>
-    <div class="steps">
-      <div class="step"><b>Lap starts</b><br><code>/v3-lap</code> packs ticket ABC-123 from a clean copy of master and starts one devbox session: lap <code>lap-20261006-0944</code>, branch <code>devbox/lap-20261006-0944/bugfix/ABC-123-...</code>.</div>
-      <div class="step"><b>Round 1</b> (devbox)<br>Builds test-first, reviews, runs the gates, writes the handoff. Status: Ready.</div>
-      <div class="step"><b>Result + answers</b> (laptop)<br><code>/v3-lap result</code> brings it home. You answer "1 keep 2 yes". No change asked, so nothing goes back.</div>
-      <div class="step"><b>Push day review</b> (laptop)<br><code>/v3-lap push</code> checks drift and reviews before pushing. It found master had merged a new tax rule from another ticket after round 1 started. Push stopped, nothing pushed.</div>
-      <div class="step"><b>Round 2</b> (devbox, follow-up)<br>The fixes go to the <b>same</b> session as a follow-up: merge master, change one formula, update tests, new handoff. Same lap id, same branch.</div>
-      <div class="step"><b>Round 3, if needed</b><br>If the spec owner rules differently, one more follow-up to the same session. Still the same lap. Then result, answer, push again.</div>
+
+<section class="panel ref" id="words">
+      <h2>Words</h2>
+      <ul>
+        <li><b>Lap</b>: one <code>/v3-lap</code> = one devbox session for a set of tickets, from packing until push day. It has one id (<code>lap-20261006-0944</code>) and its tickets keep their branches for the whole lap.</li>
+        <li><b>Round</b>: one build-review-test pass inside a lap, ending in a handoff. Round 1 is the first night. Every change you ask for afterwards (from your answers, or from the push-day review) is a <b>follow-up</b> to the same session: round 2, round 3, on the same branches. A new round is never a new lap.</li>
+        <li><b>New lap</b>: only when you send new tickets with <code>/v3-lap</code>.</li>
+        <li><b>Wave</b>: every branch merged and deployed to the stack once.</li>
+        <li><b>Run</b>: one pass of the Playwright matrix, about 14 minutes.</li>
+        <li><b>Exit pair</b>: two green runs in a row on the same build.</li>
+      </ul>
+    </section>
+
+<section class="refs" aria-label="Rules and facts">
+    <div class="panel ref" id="rulings">
+      <h2>Ruling levels</h2>
+      <ul>
+        <li><b>T1</b> obvious fix (text, typo, CSS nudge): the loop decides.</li>
+        <li><b>T2</b> a choice the shop makes (required or optional, limits, defaults): goes ahead with a pick, flagged for the PM before push.</li>
+        <li><b>T3</b> business decision (new feature, money, tax): flagged for a full talk with the PM.</li>
+        <li>Unsure between T1 and T2? Treat it as T2.</li>
+      </ul>
     </div>
-    <ul class="notes">
-      <li><b>Where a round can start:</b> your handoff answers (<code>/v3-lap answer</code> with a "change"), or the push-day review finding something to fix.</li>
-      <li><b>What never happens in a round:</b> a push. GitHub only sees the branch on push day, after you say "push".</li>
-      <li><b>A finished session can still take a follow-up</b>, so a round can start the next morning or days later.</li>
-      <li><b>New lap</b> = new tickets packed with <code>/v3-lap</code>. Tickets from different laps never share a session.</li>
-    </ul>
-  </div>
+    <div class="panel ref" id="house">
+      <h2>House rules in the space</h2>
+      <ul>
+        <li>One heavy thing at a time: builds, the matrix and pytest take turns.</li>
+        <li>Check the stack is free first: <code>pgrep -f "playwright test|exit-pair|deploy-api|build-next"</code></li>
+        <li>Anything over 10 minutes runs detached.</li>
+        <li>Unclear? Write a ruling and keep going.</li>
+      </ul>
+    </div>
+    <div class="panel ref" id="spike">
+      <h2>Devbox spike results</h2>
+      <ul>
+        <li>Stack, backend tests, ruff ratchet, frontend build and Playwright smoke all ran unattended.</li>
+        <li>No plugins in the space: the lap rules travel as <code>docs/gauntlet/RULES.md</code>.</li>
+        <li>Uncommitted laptop edits arrive inside a snapshot commit, so laps are packed from a clean copy at master.</li>
+        <li>Only <code>devbox/...</code> branches come home: ticket branches are <code>devbox/&lt;lap&gt;/&lt;branch&gt;</code>.</li>
+        <li>No GitHub access and no Notion token in the space: push day and board updates run on the laptop.</li>
+        <li>12 GB RAM, no swap: one heavy thing at a time.</li>
+      </ul>
+    </div>
 </section>
+
 <footer>Modelled on the devbox guide's gauntlet loop. DONE = merged (0.5.x); PLANNED = designed, not built yet.</footer>
+  </div>
+</div>
 
 <script>
 const LANES = [
@@ -276,7 +459,7 @@ const S = [
    reply:"1 keep 2 keep 3 yes 4 change: keep the old label",
    out:["Round 2 running, or nothing to change"]},
   {lane:"morning", t:"/v3-lap push", where:"Laptop", who:"Only on your word", badge:"ok",
-   does:["Per Ready ticket: a safety check (built on the clean base, has commits, no docs/gauntlet files), a secret scan, then push from the laptop.","Opens the draft PR as the project config says, posts the chat review-request draft, and moves the card to PR open with the PR link.","PLANNED before first use: the push runs from a temporary worktree (or skips the hook), so your pre-push build never runs in your main checkout."],
+   does:["Per Ready ticket: a safety check (clean base, right author and committer, no docs/gauntlet files, no tool attribution), a secret scan, then push from the laptop.","Opens the draft PR as the project config says, posts the chat review-request draft, and moves the card to PR open with the PR link.","Uses the devbox final review (or reviews first), checks how far master moved, and pushes from a temporary worktree, so your main checkout is never touched."],
    reply:"push",
    out:["Draft PRs, one per ticket"]},
   {lane:"morning", t:"Merged, Done", where:"Laptop + Notion", who:"The plugin", badge:"ok",
@@ -395,6 +578,15 @@ window.addEventListener("load", () => { place(0, false); show(0); });
   setInterval(() => { x = x >= 100 ? 0 : x + 0.5; mp.style.left = `calc(${x}% - 10px)`; }, 60);
 })();
 
+
+(function(){
+  const links = [...document.querySelectorAll('.toc a')];
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  }), {rootMargin: '-35% 0px -60% 0px'});
+  links.forEach(a => { const t = document.querySelector(a.getAttribute('href')); if (t) io.observe(t); });
+})();
 </script>
 </body>
 </html>
