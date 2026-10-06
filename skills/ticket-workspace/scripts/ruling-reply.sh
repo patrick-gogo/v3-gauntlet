@@ -1,32 +1,50 @@
 #!/usr/bin/env bash
 # Parse a rulings-batch reply such as "1 keep 2 change: reuse the modal 3 keep", "1-5 keep 6 yes 7 no" or "all keep".
-# Usage: ruling-reply.sh <number of questions> "<reply>"
-# Prints one line per question: "<n> keep", "<n> change <text>", "<n> yes" or "<n> no".
+# Usage: ruling-reply.sh <number of questions> "<reply>" [--yesno <n[,n...]>]
+# --yesno marks yes/no questions: there "keep" counts as "yes" and free text passes through verbatim.
+# Prints one line per question: "<n> keep", "<n> change <text>", "<n> yes" or "<n> no" (or the free text of a yes/no question).
 # A range "a-b" applies its verb (and change text) to every number from a to b.
 # Exit: 0 every question answered once, 2 bad input (missing, unknown, repeated or unclear answers).
 set -u
-count=${1:-}; reply=${2-}
-case "$count" in ''|*[!0-9]*) echo "usage: ruling-reply.sh <count> \"<reply>\"" >&2; exit 2 ;; esac
+count=${1:-}; reply=${2-}; yesno=""
+case "$count" in ''|*[!0-9]*) echo "usage: ruling-reply.sh <count> \"<reply>\" [--yesno <n[,n...]>]" >&2; exit 2 ;; esac
 [ "$count" -gt 0 ] || { echo "count must be at least 1" >&2; exit 2; }
+if [ $# -gt 2 ]; then
+  shift 2
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --yesno) [ $# -ge 2 ] || { echo "--yesno needs question numbers" >&2; exit 2; }
+               yesno="$yesno $(printf '%s' "$2" | tr ',' ' ')"; shift 2 ;;
+      *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+  done
+fi
+for q in $yesno; do
+  case "$q" in *[!0-9]*) echo "bad --yesno number: $q" >&2; exit 2 ;; esac
+  { [ "$q" -ge 1 ] && [ "$q" -le "$count" ]; } || { echo "--yesno $q: no such ruling (there are $count)" >&2; exit 2; }
+done
 
-printf '%s\n' "$reply" | LC_ALL=C awk -v count="$count" '
-  function flush(  k) {
+printf '%s\n' "$reply" | LC_ALL=C awk -v count="$count" -v yesno="$yesno" '
+  function flush(  k, yn) {
     if (cur == "") return
     for (k = cur; k <= curhi; k++) {
       if (k in seen) { err = err "ruling " k " answered twice\n"; continue }
-      seen[k] = 1
-      if (verb == "keep" || verb == "yes" || verb == "no") { if (txt != "") err = err "ruling " k ": " verb " takes no text\n"; else ans[k] = verb }
+      seen[k] = 1; yn = (k in yn_q)
+      if (verb == "keep" && yn && txt == "") ans[k] = "yes"
+      else if (verb == "keep" || verb == "yes" || verb == "no") { if (txt == "") ans[k] = verb; else if (yn) ans[k] = verb " " txt; else err = err "ruling " k ": " verb " takes no text\n" }
       else if (verb == "change") { if (txt == "") err = err "ruling " k ": change needs what to change\n"; else ans[k] = "change " txt }
+      else if (verb == "?" && yn) ans[k] = txt
       else err = err "ruling " k ": say keep or change\n"
     }
   }
   # A verb token: keep, change, yes or no, any case, with an optional trailing ":" "," or ".".
   function verbof(t,  v) { v = tolower(t); sub(/[:,.]+$/, "", v); return (v == "keep" || v == "change" || v == "yes" || v == "no") ? v : "" }
+  BEGIN { m = split(yesno, yl, " "); for (i = 1; i <= m; i++) yn_q[yl[i] + 0] = 1 }
   {
     gsub(/,/, " ")
     n = split($0, tok, /[ \t]+/)
     if (tolower($1) == "all" && verbof($2) == "keep" && n <= 3 && (n < 3 || tok[3] == "")) {
-      for (i = 1; i <= count; i++) print i " keep"
+      for (i = 1; i <= count; i++) print i " " ((i in yn_q) ? "yes" : "keep")
       exit 0
     }
     cur = ""; curhi = ""; verb = ""; txt = ""; err = ""
@@ -47,7 +65,7 @@ printf '%s\n' "$reply" | LC_ALL=C awk -v count="$count" '
       }
       if (cur == "") continue
       if (verb == "" && verbof(t) != "") { verb = verbof(t); continue }
-      if (verb == "") { verb = "?"; continue }
+      if (verb == "") { verb = "?"; txt = t; continue }
       txt = (txt == "" ? t : txt " " t)
     }
     flush()

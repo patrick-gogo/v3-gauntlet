@@ -129,4 +129,42 @@ ticket T-1 handoff feat/t-1 'push_approved: yes
 '
 hook "$tmp/plain" "git -C \"$tmp/push wt\" push -u origin HEAD:feat/t-1"; assert_eq 0 "$code" "detached push HEAD:branch allowed when approved"
 git -C "$R" worktree remove --force "$tmp/push wt"
+
+# Destination-based push judgement: the branch pushed decides, wherever the checkout is.
+git -C "$R" switch -q main
+ticket T-1 approved feat/t-1
+hook "$R" 'git push --no-verify -u origin feat/t-1'; assert_eq 2 "$code" "push options skipped: unapproved push from main blocked"
+assert_contains "$err" "T-1" "names the ticket"
+ticket T-1 approved feat/t-1 'push_approved: yes
+'
+hook "$R" 'git push --no-verify -u origin feat/t-1'; assert_eq 0 "$code" "push options skipped: approved push from main allowed"
+ticket T-1 approved feat/t-1
+for opt in '-o ci.skip' '--push-option=x' '--force-with-lease' '-u' '--no-verify'; do
+  hook "$R" "git push $opt origin feat/t-1"; assert_eq 2 "$code" "option [$opt] does not hide the branch"
+done
+hook "$R" 'git push origin main:feat/t-1'; assert_eq 2 "$code" "src:dst judged by dst when unapproved"
+hook "$R" 'git push origin feat/t-1:main'; assert_eq 0 "$code" "src:dst with an unrelated dst allowed"
+hook "$R" 'git push origin main feat/t-1'; assert_eq 2 "$code" "every refspec is checked"
+hook "$R" 'git push origin +feat/t-1'; assert_eq 2 "$code" "forced refspec judged by its branch"
+hook "$R" 'git push origin :feat/t-1'; assert_eq 2 "$code" "delete refspec judged by its branch"
+hook "$R" 'git -C /tmp/x/push-T-1 push -u origin HEAD:feat/t-1'; assert_eq 2 "$code" "unquoted path holding the word push cannot fail open"
+hook "$R" 'git -c core.x=y push origin feat/t-1'; assert_eq 2 "$code" "git -c k=v before push"
+git -C "$R" switch -q feat/t-1
+hook "$R" 'git push origin HEAD'; assert_eq 2 "$code" "HEAD resolves to the current branch"
+git -C "$R" switch -q main
+hook "$R" 'git push origin HEAD'; assert_eq 0 "$code" "HEAD on main is main"
+# Another ticket is current; the pushed branch's ticket is the one named.
+git -C "$R" branch -q feat/t-5
+ticket T-5 implementing feat/t-5
+git -C "$R" switch -q feat/t-5
+hook "$R" 'git push origin feat/t-1'; assert_eq 2 "$code" "push of an unapproved branch from another ticket's checkout blocked"
+assert_contains "$err" "T-1" "names the pushed ticket"
+assert_not_contains "$err" "T-5" "does not name the checked-out ticket"
+ticket T-1 approved feat/t-1 'push_approved: yes
+'
+hook "$R" 'git push origin feat/t-1'; assert_eq 0 "$code" "approved pushed branch allowed although the checkout's ticket is not"
+hook "$R" 'git push'; assert_eq 2 "$code" "no refspec falls back to the current branch"
+assert_contains "$err" "T-5" "fallback names the current ticket"
+git -C "$R" switch -q main
+rm -rf "$TICKETS_HOME/demo/T-5"
 finish

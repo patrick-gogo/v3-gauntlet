@@ -67,10 +67,16 @@ Laptop and repo
 - **First real lap not run yet.** `RULES.md`, the lead brief and `/v3-lap result|answer|push` are unproven; expect fixes after lap 1.
 - **Windows:** Git Bash has no `python3`, so 4 checks fail (validate JSON x2, a dev-server timing check, a fixture check). Node's `process.exit()` after a fetch aborts on Windows; the queue client sets `process.exitCode` instead.
 - **Guard hook:** while a ticket is Planned (phase `approved`), commits on its base branch are blocked in that checkout.
-- **Public repo:** company values stay in the private config. Commits no longer carry tool attribution (0.4.0 enforces it).
+- **Public repo:** company values stay in the private config. Commits no longer carry tool attribution (0.4.0 enforces it). Commits carry the author's usual work email address by the owner's choice.
 
-## Next (2026-10-06)
-1. The lap ends with a full review pass per finished ticket (conventions with the project reviewer's rules, correctness, history, in-code comments, plus an impact trace), written in the project review tool's report format with head_sha = the final commit; `/v3-lap result` copies it into the vault, so the PR is the only step left.
-2. The project's ticket-planning tool creates the ticket cache, the vault folder + overview and the tracker ticket page the way the existing `/start-ticket` does, so the review tool and the guard hook work for lap tickets.
-3. Deep whole-branch review of 0.4.0 (today's final review was a quick skim at the owner's request).
-4. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.
+## Built in 0.5.0 (2026-10-06)
+- The lap ends with a final review per Ready ticket (RULES 2.8b), brought home by `/v3-lap result` and copied where the config's `## Review copy` says.
+- PLAN creates the project's own ticket records (`## Ticket records`).
+- The lead drafts review-request fields (handoff section 5); push day fills the config's `## Review request` template.
+- Push day: drift and conflict check (`drift.sh`), re-authored commits keep their review (`review-head.sh`), pushes always from a temporary worktree, skips tickets with pending changes, attribution check in `lap-check.sh`.
+- Deep review of 0.4.0 done: 8 Important findings fixed (SHIP first push, attribution check, round-2 push, guard refspec and path parse, public-repo values, hook defaults, re-author hooks). The 14 Minor findings are tracked on the owner's to-do list for a later pass.
+
+## Next
+1. Run a lap with 0.5.0 end to end (final review on the devbox, push day without a manual review).
+2. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.
+3. The 0.4.0 review's Minor findings.

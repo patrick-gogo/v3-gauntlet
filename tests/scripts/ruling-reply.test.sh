@@ -72,4 +72,51 @@ assert_eq 2 "$code" "yes/no take no text"
 out=$(bash "$S" 5 "5-2 keep" 2>&1); code=$?
 assert_eq 2 "$code" "a reversed range is refused"
 assert_contains "$out" "bad range 5-2" "names the reversed range"
+
+# A question marked yes/no (--yesno N[,N...]): keep means yes, and free text passes through.
+out=$(bash "$S" 7 "all keep" --yesno 7); code=$?
+assert_eq 0 "$code" "all keep with a yes/no question"
+assert_eq "1 keep
+2 keep
+3 keep
+4 keep
+5 keep
+6 keep
+7 yes" "$out" "keep on the yes/no question counts as yes"
+
+out=$(bash "$S" 7 "1-6 keep 7 keep" --yesno 7); code=$?
+assert_eq 0 "$code" "range then keep on the yes/no question"
+assert_eq "1 keep
+2 keep
+3 keep
+4 keep
+5 keep
+6 keep
+7 yes" "$out" "same result by range"
+
+out=$(bash "$S" 3 "1 keep 2 no 3 keep" --yesno 2,3); code=$?
+assert_eq "1 keep
+2 no
+3 yes" "$out" "several yes/no questions; an explicit no stays no"
+
+out=$(bash "$S" 2 "1 keep 2 sure, but only on staging" --yesno 2); code=$?
+assert_eq 0 "$code" "free text on a yes/no question"
+assert_eq "1 keep
+2 sure but only on staging" "$out" "free text passes through verbatim (commas read as spaces)"
+
+out=$(bash "$S" 2 "1 keep 2 maybe" --yesno 2); code=$?
+assert_eq 0 "$code" "a single free word on a yes/no question"
+assert_eq "1 keep
+2 maybe" "$out" "the first word is kept"
+
+out=$(bash "$S" 2 "1 maybe 2 keep" --yesno 2 2>&1); code=$?
+assert_eq 2 "$code" "free text on a question not marked yes/no is still refused"
+assert_contains "$out" "ruling 1: say keep or change" "same message"
+
+out=$(bash "$S" 2 "1 keep 2 keep" 2>&1); assert_eq "1 keep
+2 keep" "$out" "without --yesno keep stays keep"
+
+bash "$S" 2 "1 keep 2 keep" --yesno 5 >/dev/null 2>&1; assert_eq 2 $? "a yes/no number past the last ruling is bad input"
+bash "$S" 2 "1 keep 2 keep" --yesno >/dev/null 2>&1; assert_eq 2 $? "--yesno needs a value"
+bash "$S" 2 "1 keep 2 keep" --bogus >/dev/null 2>&1; assert_eq 2 $? "unknown option is bad input"
 finish

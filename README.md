@@ -65,7 +65,7 @@ PLAN writes the tracker ticket (original and English translation) into the card 
 
 **Tracker integration.** When the project config has a `## Tracker status` section, PLAN moves the user's own To Do ticket to In Progress at intake. This flags the ticket as work-in-progress in the tracker.
 
-**Checkout strategy.** By default, a local BUILD enters a worktree via the EnterWorktree tool, keeping your main checkout clean. Set `checkout: main` to work in the main checkout instead. On push day, the plugin never runs hooks in the main checkout: it pushes from a temporary worktree, or with `--no-verify` when `push_skip_hooks: yes` is set.
+**Checkout strategy.** By default, a local BUILD enters a worktree via the EnterWorktree tool, keeping your main checkout clean. Set `checkout: main` to work in the main checkout instead. On push day, the plugin never runs hooks in the main checkout: SHIP pushes from the ticket's worktree (or a temporary one with `checkout: main`), and a lap pushes from a temporary worktree with `--no-verify` unless `push_skip_hooks: no` is set.
 
 The board never blocks PLAN: if Notion cannot be reached, PLAN says so and you add the card by hand.
 
@@ -84,7 +84,13 @@ Runs the queue's **Queued** tickets as an unattended lap on a devbox (an always-
 /v3-lap push                push day, only on your word: safety check, secret scan, push, draft PRs
 ```
 
-The lap is sent from a clean temporary worktree at the base branch, never from your working checkout. It carries `docs/gauntlet/<lap>/` (the lead brief, each ticket's plan and rulings) and `docs/gauntlet/RULES.md` (the lap rules plus the project config's Gates, Stack and House rules). The devbox needs none of these plugins. Ticket branches come home as `devbox/<lap>/<branch>`; `lap-check.sh` refuses to push one that is not built on the clean base, has no commits, or carries `docs/gauntlet/` files.
+The lap is sent from a clean temporary worktree at the base branch, never from your working checkout. It carries `docs/gauntlet/<lap>/` (the lead brief, each ticket's plan and rulings) and `docs/gauntlet/RULES.md` (the lap rules plus the project config's Gates, Stack and House rules). The devbox needs none of these plugins. Ticket branches come home as `devbox/<lap>/<branch>`; `lap-check.sh` refuses to push one that is not built on the clean base, has no commits, carries `docs/gauntlet/` files, or has tool attribution in a commit message.
+
+**Final review.** Before handing off, the lead reviews each Ready ticket once more, the way you would review your own branch before a PR: four lenses (conventions, correctness, history, in-file guidance) plus an impact trace, written to `docs/gauntlet/<lap>/tickets/<id>/final-review.md` with the reviewed `head_sha`. `/v3-lap result` brings it home, puts it on the card, and copies it where the config's `## Review copy` says.
+
+**Push day checks.** Before pushing, `/v3-lap push` checks how far the base branch has moved (`drift.sh`: commits behind, files changed on both sides, a real conflict stops the ticket), accepts the final review when the commits were only re-authored (`review-head.sh` compares trees), and otherwise runs a review first. It pushes from a temporary worktree, never the main checkout, skipping hooks by default because the gates ran in the lap. With a `## Review request` section it fills a review-request draft from the lead's handoff fields. A ticket with a pending change answer, or any ticket during round 2, is pushed only when you name it.
+
+**Ticket records.** With a `## Ticket records` section in the project config, PLAN also creates the project's own per-ticket notes at intake (whatever a later review or guard expects).
 
 ### Known limits
 - **Push day runs on the laptop.** Devbox jobs have no git remote and no GitHub login, so they never push; `/v3-lap push` does it from the laptop with your own credentials.

@@ -55,7 +55,7 @@ If `checkout` is a worktree path and the session is not inside it, call the `Ent
 
 `checkout: worktree` (the default) means BUILD makes the ticket's worktree with `EnterWorktree` (see `v3-gauntlet:ticket-build` step 0), so local builds never switch branches in the main checkout, where another agent may be working. `checkout: main` opts out.
 
-Pushing never runs hooks in the main checkout (a project's pre-push hook may run a full build there). A push either skips hooks (`push_skip_hooks: yes`) or runs from a temporary worktree; `v3-gauntlet:ticket-ship` section 3 and `v3-gauntlet:lap` push day give the exact steps.
+Pushing never runs hooks in the main checkout (a project's pre-push hook may run a full build there). Lap push day always pushes from a temporary worktree and skips hooks unless the config says `push_skip_hooks: no`; SHIP in worktree mode pushes from the ticket's own worktree, which BUILD already set up. A fresh temporary worktree has no installed dependencies, so hooks that need them fail there. `v3-gauntlet:ticket-ship` section 3 and `v3-gauntlet:lap` push day give the exact steps.
 
 ## Project config
 A work project may hold `.claude/v3-gauntlet.md` (keep it out of git: it can hold project details). Every key is optional; without the file the stages use their generic behaviour.
@@ -75,13 +75,23 @@ lap_timezone: <tz>                for the stop time (default Asia/Manila, the de
 lap_parallel: on | off            tickets in a lap at once (default off)
 lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy (and push day its temporary push worktrees)
 checkout: worktree | main         where BUILD works (default worktree: an EnterWorktree worktree, so the main checkout keeps its branch; main builds in the main checkout)
-push_skip_hooks: yes | no         yes: push with --no-verify because the gates already ran in the lap or BUILD (default no: the push runs the project's hooks in a temporary worktree, never in the main checkout)
+push_skip_hooks: yes | no         yes: push with --no-verify because the gates already ran (default: yes for lap push day, no for SHIP; hooks never run in the main checkout)
+push_merge_base: yes | no         lap push day merges the base branch into a ticket branch that is behind before pushing (default no; never a rebase)
 
 ## Intake
 <how to read a ticket: which tool, which site; free text>
 
 ## Tracker status
 <how to move the user's own To Do ticket to In Progress at intake; free text, read on the laptop>
+
+## Ticket records
+<the project's own per-ticket notes, caches or pages PLAN creates at intake, e.g. what a later review or guard expects; free text, read on the laptop>
+
+## Review copy
+<where /v3-lap result copies each ticket's final review ({id}, {date} placeholders), and which review command push day runs when the review is stale or missing>
+
+## Review request
+<the template push day fills from the handoff's review-request fields ({type}, {what}, {bullets}, {testing}, {self_review}, {pr_url}, {ticket_url}) and where it delivers the draft>
 
 ## Gates
 <name>: <command>                 a lap replaces {base} with the frozen base commit
