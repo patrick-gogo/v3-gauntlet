@@ -48,4 +48,19 @@ assert_eq 2 "$code" "an existing lap folder is never overwritten"
 bash "$P" "$proj" "../evil" "$tmp/ws/V3-1" >/dev/null 2>&1; assert_eq 2 $? "a lap id with a path is refused"
 bash "$P" "$proj" lap-e >/dev/null 2>&1; assert_eq 2 $? "at least one ticket is required"
 bash "$P" "$tmp/nope" lap-f "$tmp/ws/V3-1" >/dev/null 2>&1; assert_eq 2 $? "the project folder must exist"
+[ -e "$L/tickets/V3-1/prior-art" ] && _ko "no prior art without --vault" || _ok
+
+# --vault adds each ticket's prior art and every learning (not the learnings index).
+V="$tmp/vault"; mkdir -p "$V/tickets/V3-9" "$V/learnings"
+printf '### Don'"'"'t repeat\nscope.txt of V3-1 is not a real path.\n' > "$V/tickets/V3-9/handoff.md"
+printf '%s\n' '---' 'type: learning' '---' '# A trap' > "$V/learnings/a-trap.md"
+printf '# index\n' > "$V/learnings/Learnings.md"
+bash "$P" --vault "$V" "$proj" lap-v "$tmp/ws/V3-1" >/dev/null 2>&1; assert_eq 0 $? "packs with a vault"
+assert_file "$proj/docs/gauntlet/lap-v/tickets/V3-1/prior-art/prior-art.md" "prior-art index per ticket"
+assert_file "$proj/docs/gauntlet/lap-v/learnings/a-trap.md" "learnings copied"
+[ -e "$proj/docs/gauntlet/lap-v/learnings/Learnings.md" ] && _ko "the learnings index is not copied" || _ok
+out=$(bash "$P" --vault "$tmp/novault" "$proj" lap-w "$tmp/ws/V3-1" 2>&1); code=$?
+assert_eq 2 "$code" "a missing vault is refused"
+assert_contains "$out" "no vault" "names the vault problem"
+[ -e "$proj/docs/gauntlet/lap-w" ] && _ko "nothing is written for a missing vault" || _ok
 finish
