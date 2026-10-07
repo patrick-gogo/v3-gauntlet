@@ -93,6 +93,9 @@ push_merge_base: yes | no         lap push day merges the base branch into a tic
 ## Review request
 <the template push day fills from the handoff's review-request fields ({type}, {what}, {bullets}, {testing}, {self_review}, {pr_url}, {ticket_url}) and where it delivers the draft>
 
+## Lap announcement
+<the message /v3-lap drafts when a lap starts ({tickets}, {ticket_lines}, {ticket_urls}, {count}, {stop_time}, {lap}) and where it delivers the draft>
+
 ## Gates
 <name>: <command>                 a lap replaces {base} with the frozen base commit
 

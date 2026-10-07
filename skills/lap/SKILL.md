@@ -33,7 +33,8 @@ Read `v3-gauntlet:ticket-workspace` first (project config, rulings, scripts). `T
    `Run the gauntlet batch in docs/gauntlet/<lap>/lead-brief.md. Read docs/gauntlet/RULES.md first. The clean base is <BASE>; it must be the parent of your starting commit. Never push.`
 8. **Record:** create `LR`, copy `"$WT/docs/gauntlet/"` to `"$LR/packed/"`, set `lap`, `job`, `job_branch` (from the start result), `base`, `base_branch`, `tickets`, `status running`, `started`. In each ticket's state: `set lap <lap>`. Board: `$Q status --key <id> --status Running --notes "lap <lap>, job <job>"`.
 9. **Clean up:** `git worktree remove --force "$WT"` (everything in it was sent and copied to `packed/`).
-10. Tell the user in a few lines: the lap id, the job id, the tickets in order, the stop time, and that they can close the laptop; `/v3-lap result` brings it home.
+10. **Announcement:** when `CFG` has a `## Lap announcement` section, fill its template with `{tickets}` (the IDs in order, joined with " and " for two, commas before that), `{ticket_lines}` (one line per ticket: `<id> <title>`, titles in English), `{ticket_urls}` (one URL per ticket when the section says how to build them), `{count}`, `{stop_time}` (`$STOP`) and `{lap}`, and deliver it as the section says (a draft, never a team post). A failure is one line; the lap is already running.
+11. Tell the user in a few lines: the lap id, the job id, the tickets in order, the stop time, where the announcement draft went, and that they can close the laptop; `/v3-lap result` brings it home.
 
 ## /v3-lap result [lap]
 Default lap: the newest record with `status running` or `round2`.
