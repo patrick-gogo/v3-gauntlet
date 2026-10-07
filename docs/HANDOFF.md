@@ -28,7 +28,7 @@ The full plan (change list 1 to 20, decisions, order) is on the Notion page "v3-
 - `branch-name.sh`: `--prefix`, `--keep-id-case`; 13 checks.
 - PLAN rewritten: go-ahead rulings tagged T1/T2/T3, one batch at the end, translation, project-config intake, stops at Planned and adds the board row; never starts BUILD. `/v3-ticket <id> build` builds locally.
 - Full suite: only the 4 known Windows-only failures (no `python3` in Git Bash, a dev-server timing check, a fixture check).
-- Notion setup done on the laptop (`~/.config/v3-gauntlet/notion.env`). Not on the devbox: SSH into the space is unknown, so the laptop does every board update for now.
+- Notion setup done on the laptop (`~/.config/v3-gauntlet/notion.env`). Not on the devbox yet, so the laptop does every board update for now.
 
 ## Devbox spike results (2026-10-05)
 - Space: 8 CPUs, 12 GB RAM, no swap. Docker and compose work; node, python3, git, gh, jq, perl, timeout, setsid present; `uv` and `psql` missing.
@@ -48,7 +48,8 @@ The full plan (change list 1 to 20, decisions, order) is on the Notion page "v3-
 ## Caveats and behaviours to know
 Setup
 - **No GitHub token on the devbox** (the optional field was left empty) and jobs have **no git remote**: jobs cannot push or open PRs. Push day is `/v3-lap push` on the laptop. Adding a token later would allow devbox pushes, but the plugin does not use that.
-- **No Notion token on the devbox.** SSH into the space was refused for the user's key at both the relay and the LAN address; the right host or port is unknown. The board is updated by the laptop only: Running at `/v3-lap`, Ready / Needs you at `/v3-lap result`. It does not move overnight.
+- **SSH into the space works** with the user's own key. The exact command (an anywhere one and a home-network one, each on its own port) is on the devbox portal's space page under Connect; the 10-05 spike tried the wrong port and wrongly reported it refused. On the box, bare repos live in `~/repos/<name>.git` and each job gets a folder in `~/work/<job>`.
+- **No Notion token on the devbox.** Nothing puts one there yet, so the board is updated by the laptop only: Running at `/v3-lap`, Ready / Needs you at `/v3-lap result`. It does not move overnight.
 - **Notion token on the laptop only**, in `~/.config/v3-gauntlet/notion.env`, shared with the queue database alone. It can create and update cards, not delete them.
 - **The tracker connection on the laptop may be logged in as a different person**, so the primary tracker API reader is configured in the private config's Intake.
 - **The devbox runs on a shared Claude account.** The stop time (default 06:30 Asia/Manila) keeps a lap from starting new tickets right before the workday.
