@@ -74,6 +74,7 @@ lap_stop_time: HH:MM              no new ticket starts in a lap after this time 
 lap_timezone: <tz>                for the stop time (default Asia/Manila, the devbox's zone)
 lap_parallel: on | off            tickets in a lap at once (default off)
 lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy (and push day its temporary push worktrees)
+prior_art_vault: <path>           the owner's notes vault (tickets/<id>/ and learnings/): a lap packs each ticket's prior art from it, and /v3-lap learn writes kept learnings back
 checkout: worktree | main         where BUILD works (default worktree: an EnterWorktree worktree, so the main checkout keeps its branch; main builds in the main checkout)
 push_skip_hooks: yes | no         yes: push with --no-verify because the gates already ran (default: yes for lap push day, no for SHIP; hooks never run in the main checkout)
 push_merge_base: yes | no         lap push day merges the base branch into a ticket branch that is behind before pushing (default no; never a rebase)
