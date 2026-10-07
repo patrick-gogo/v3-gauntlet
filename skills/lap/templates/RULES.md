@@ -27,6 +27,7 @@ Lap = GO to handoff. Round = building to the exit pair. Wave = every ready branc
 Read the lead brief and every ticket folder. Check `BASE` (rail 3). Note the stop time.
 - Set the commit identity from the brief in every worktree you make: `git -C <worktree> config user.name "<git_name>"` and `user.email "<git_email>"`.
 - Some project tools compare against `origin/<base_branch>`; there is no remote here, so create it: `git update-ref refs/remotes/origin/<base_branch> $BASE`. Delete it at cleanup (`git update-ref -d refs/remotes/origin/<base_branch>`).
+- **Prior art:** when a ticket has `docs/gauntlet/<lap>/tickets/<id>/prior-art/`, read its `prior-art.md` index and the extracts it lists, then every note in `docs/gauntlet/<lap>/learnings/` that the index names. These are lessons from earlier tickets in the owner's notes: traps, dead ends and past review findings in the same code. They do not outrank the ticket's bar or rulings; when one contradicts a ruling, that is a T2 question in the handoff, not a silent pick.
 - Ledger `go`.
 
 ### 2.2 Freeze the base and bring the stack up
@@ -36,7 +37,7 @@ Read the lead brief and every ticket folder. Check `BASE` (rail 3). Note the sto
 
 ### 2.3 Build (per ticket, in the brief's order; tickets may run in parallel only when the brief says so)
 For each ticket: `git worktree add /tmp/lap-<id> -b devbox/<lap>/<branch> $BASE`. Then for each task in its `plan.md`, in order:
-1. **Implement test-first, with a fresh helper per task** (a subagent, so the builder never grades itself). Give it: the task text verbatim, the ticket's rulings, `bar.md`, the house rules, the worktree path, and this discipline:
+1. **Implement test-first, with a fresh helper per task** (a subagent, so the builder never grades itself). Give it: the task text verbatim, the ticket's rulings, `bar.md`, the house rules, any prior-art lesson about the files the task touches, the worktree path, and this discipline:
    - **RED:** write the task's test first and run it. It must fail, and fail for the right reason (an assertion about the missing behaviour, not an import or setup error). A test that passes before the change does not test it: rewrite it.
    - **GREEN:** write the smallest change that makes it pass. No drive-by edits.
    - **REFACTOR** only if the task says so; all tests stay green.
@@ -48,6 +49,7 @@ For each ticket: `git worktree add /tmp/lap-<id> -b devbox/<lap>/<branch> $BASE`
 
 ### 2.4 Ticket review (the gauntlet)
 When a ticket's tasks are done, review the whole ticket branch (`$BASE..devbox/<lap>/<branch>`) with fresh critics, each on one concern: **impact** (callers and consumers outside the diff), **security and regression**, **requirements** (every AC in `bar.md` met, with evidence), and **project conventions** when this file has a "Project conventions review" section (that critic follows it and returns findings only, no verdict). Depth `lite` = one combined critic; `full` adds a challenger who tries to refute each Critical and Important finding from the code.
+- Give every critic the ticket's prior art: a change that repeats a recorded trap or reintroduces an earlier review finding is a finding.
 - Drop any finding without location, trigger, expected and actual.
 - Only fix what this ticket caused and whose fix is the same class of work (**fix-here**). Pre-existing problems and different-class fixes go to the handoff as follow-ups.
 - Fix rounds: a new helper, failing test first; then a **fresh** critic re-reviews the fix diff only.
@@ -165,4 +167,20 @@ Bullets:
 - <one clause, at most two bullets>
 Testing: <one line: what ran and the result>
 Self-review: <"clean" or "found N, fixed N"> (from 2.8b)
+
+## 6. Proposed learnings
+At most two, and none is the usual answer. A learning is a lesson about how the CODE behaves
+(a trap, an invariant, a coupling between files) that will matter outside this ticket, is not
+obvious from reading the code, and is not already in the packed learnings/. Not what happened
+on this lap (that is section 4), not a preference about how to work. One block each:
+### <short-kebab-slug>
+---
+type: learning
+feature: <the ticket's feature, from its prior-art.md, else "other">
+components:
+  - <repo-relative path>
+source_ticket: <id>
+---
+# <one-line claim>
+<two to five sentences: the behaviour, where it bites, how to avoid it>
 ```

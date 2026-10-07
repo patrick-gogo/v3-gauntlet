@@ -100,6 +100,7 @@ Runs the queue's **Queued** tickets as an unattended lap on a devbox (an always-
 /v3-lap                     pack the Queued tickets and start a devbox lead; close the laptop
 /v3-lap result              bring the night home: board updated, the handoff's questions shown
 /v3-lap answer "1 keep 2 change: ..."   answer; changes start round 2 in the same devbox session
+/v3-lap learn "1 lock 2 skip"           keep the lap's proposed learnings in your notes vault
 /v3-lap push                push day, only on your word: safety check, secret scan, push, draft PRs
 ```
 
@@ -108,6 +109,8 @@ The lap is sent from a clean temporary worktree at the base branch, never from y
 **Final review.** Before handing off, the lead reviews each Ready ticket once more, the way you would review your own branch before a PR: four lenses (conventions, correctness, history, in-file guidance) plus an impact trace, written to `docs/gauntlet/<lap>/tickets/<id>/final-review.md` with the reviewed `head_sha`. `/v3-lap result` brings it home, puts it on the card, and copies it where the config's `## Review copy` says.
 
 **Push day checks.** Before pushing, `/v3-lap push` checks how far the base branch has moved (`drift.sh`: commits behind, files changed on both sides, a real conflict stops the ticket), accepts the final review when the commits were only re-authored (`review-head.sh` compares trees), and otherwise runs a review first. It pushes from a temporary worktree, never the main checkout, skipping hooks by default because the gates ran in the lap. With a `## Review request` section it fills a review-request draft from the lead's handoff fields. A ticket with a pending change answer, or any ticket during round 2, is pushed only when you name it.
+
+**Prior art.** The devbox cannot see your notes vault, so with `prior_art_vault` in the project config a lap carries a slice of it: for each ticket, at most three extracts from earlier tickets that touched the same files or feature (a handoff's "Don't repeat" lessons, an investigation's root cause, or a review's TL;DR and finding titles; never whole files), plus the vault's `learnings/`. The lead and its critics read them; the handoff can propose up to two new learnings, and `/v3-lap learn` writes the ones you keep. Nothing reaches the vault without your word.
 
 **Lap announcement.** With a `## Lap announcement` section in the project config, `/v3-lap` drafts a message announcing tonight's tickets when the lap starts (filled from the template there, delivered as a draft).
 

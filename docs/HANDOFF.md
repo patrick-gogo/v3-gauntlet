@@ -79,6 +79,12 @@ Laptop and repo
 ## Built in 0.5.1
 - The other 9 Minor findings: Notion retries on rate limits and server errors, uploads split by size, an unclosed code fence is closed, bold and inline code render on cards, deep headings and nested lists keep their shape, the card body stays above its sub-pages; the committer email is checked too; en dash ranges and a clearer reply error; the stop time is checked before a lap starts; push day resumes after a re-author, scans the PR body for secrets, and finds its temporary folder from the git common dir; CLOSE removes the worktree tool's own branch.
 
+## Built in 0.6.0 (2026-10-07)
+- Prior art: with `prior_art_vault` in the project config, `/v3-lap` packs each ticket's `prior-art/` (`prior-art.sh`: at most 3 extracts from earlier tickets on the same files or feature, one per ticket, never whole files) and the vault's `learnings/`. The lead and critics read them (RULES 2.1, 2.3, 2.4); the handoff's section 6 proposes up to two learnings; `/v3-lap learn` writes the kept ones, never overwriting a note.
+- Matching: only file keys are searched as text, and a key matches a component only when the key sits inside it, so a broad folder key does not pull in every note under it. About 5 s per ticket on a 215-ticket vault under Git Bash.
+- Limit: prior art covers code traps and past findings in the vault, not tracker rulings. A ruling that lives only in the tracker (lap 3's tax add-back) is not found this way.
+- Considered and not built: sending the whole vault as a second devbox repo. Whether a job can read another repo in the space is unknown; a probe that would have reused the space's key was refused.
+
 ## Next
-1. Run a lap with 0.5.1 end to end (final review on the devbox, push day without a manual review).
+1. Run a lap with 0.6.0 end to end: does `prior-art/` arrive, does the lead cite it, does a proposed learning come home.
 2. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.

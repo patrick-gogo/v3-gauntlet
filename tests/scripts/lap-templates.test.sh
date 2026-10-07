@@ -14,4 +14,8 @@ assert_contains "$rules" "| Final review |" "the handoff ticket table has a fina
 assert_contains "$brief" "final-review.md" "the brief's done-means lists the final review"
 assert_contains "$rules" "## 5. Review request" "the handoff has a review request section"
 assert_contains "$rules" "Self-review:" "the review request carries the self-review line"
+assert_contains "$rules" "docs/gauntlet/<lap>/tickets/<id>/prior-art/" "GO reads each ticket's prior art"
+assert_contains "$rules" "## 6. Proposed learnings" "the handoff has a proposed learnings section"
+assert_contains "$rules" "components:" "a proposed learning carries its components"
+assert_contains "$brief" "prior-art" "the brief lists the prior-art folder"
 finish
