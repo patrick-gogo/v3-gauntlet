@@ -95,6 +95,11 @@ Laptop and repo
 - Also: `tickets.tsv` no longer carries the planning-time base (the lap has one base); `lap-pack.sh` refuses a bare `--vault` and no longer uses error text as a printf format.
 - Not built: a retry inside devbox itself (that is the devbox author's side).
 
+## Built in 0.8.0 (2026-10-08)
+- Lap lessons: the handoff's new section 7 proposes up to five one-line rules for future laps; `/v3-lap result` lists them and `/v3-lap lessons "1-3 yes 4 no"` keeps them (`lap-lessons.sh`, deduplicated) in `lap_lessons` (default `<prior_art_vault>/gauntlet/lap-lessons.md`). Every lap is packed with the file (`lap-pack.sh --lessons`) and the lead reads it at GO.
+- PLAN asks only T2 and T3 rulings; T1 rulings are recorded `source: auto` and listed on "show T1". A plan with nothing to ask goes straight to Planned.
+- `/v3-lap answer` saves the questions and answers as `answers-r<k>.md` in the lap record, and copies them where a `## Answer copy` config section says.
+
 ## Next
-1. Run a lap with 0.7.0 end to end: scoped gate on a real ticket, a checkpoint commit, and (when one happens) a resume.
+1. Run a lap with 0.8.0 end to end: scoped gate on a real ticket, a checkpoint commit, and (when one happens) a resume.
 2. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.
