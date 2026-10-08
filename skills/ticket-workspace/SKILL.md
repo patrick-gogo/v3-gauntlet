@@ -81,6 +81,7 @@ tests_root: <dir>                 the Python project folder {tests} is scoped in
 task_gates: <name> ...            gates re-run after each task (default every gate); the full set runs at ticket end
 gate_paths.<name>: <prefix> ...   skip that gate when the change touches none of these path prefixes
 lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy (and push day its temporary push worktrees)
+lap_lessons: <file>               the owner's kept lap lessons, packed into every lap (default <prior_art_vault>/gauntlet/lap-lessons.md, else ~/.v3-gauntlet/lap-lessons/<repo>.md)
 prior_art_vault: <path>           the owner's notes vault (tickets/<id>/ and learnings/): a lap packs each ticket's prior art from it, and /v3-lap learn writes kept learnings back
 checkout: worktree | main         where BUILD works (default worktree: an EnterWorktree worktree, so the main checkout keeps its branch; main builds in the main checkout)
 push_skip_hooks: yes | no         yes: push with --no-verify because the gates already ran (default: yes for lap push day, no for SHIP; hooks never run in the main checkout)
@@ -100,6 +101,9 @@ push_merge_base: yes | no         lap push day merges the base branch into a tic
 
 ## Review request
 <the template push day fills from the handoff's review-request fields ({type}, {what}, {bullets}, {testing}, {self_review}, {pr_url}, {ticket_url}) and where it delivers the draft>
+
+## Answer copy
+<where /v3-lap answer copies each ticket's handoff questions and answers ({id}, {lap}, {date}); free text, read on the laptop>
 
 ## Lap announcement
 <the message /v3-lap drafts when a lap starts ({tickets}, {ticket_lines}, {ticket_urls}, {count}, {stop_time}, {lap}) and where it delivers the draft>
@@ -134,10 +138,10 @@ Levels:
 ## Formats
 Ruling (`rulings.md`):
 ```
-R3 — <title> (source: planner | orchestrator | user, level: T1 | T2 | T3)
+R3 — <title> (source: planner | orchestrator | user | auto, level: T1 | T2 | T3)
 Decision: ... / Why: ... / Alternative: ... / Cost if wrong: low | medium | high / Applies to: all | task N
 ```
-`source: user` means the user kept or changed it in a batch. A `## Batch <k>` section in `rulings.md` lists which rulings batch k asked about, numbered from 1, each with its `R` number.
+`source: user` means the user kept or changed it in a batch; `source: auto` is a T1 ruling PLAN accepted without asking. A `## Batch <k>` section in `rulings.md` lists which rulings batch k asked about, numbered from 1, each with its `R` number.
 Finding: the format in `v3-gauntlet:final-reviewer` (ID, Severity, Kind, Location, Trigger, Expected, Actual).
 Ledger line: `<UTC time> <step> <result>`. Ledger time: always `date -u +%Y-%m-%dT%H:%M:%SZ`.
 

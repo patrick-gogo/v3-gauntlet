@@ -89,4 +89,11 @@ assert_contains "$out" "V3-1: resume branch is not built on the lap base" "names
 [ -e "$g/docs/gauntlet/lap-s" ] && _ko "nothing written when a resume is refused" || _ok
 out=$(bash "$P" --resume V3-7=refs/heads/nope "$proj" lap-t "$tmp/ws/V3-1" 2>&1); code=$?
 assert_eq 2 "$code" "a resume for a ticket not in the lap, or an unknown ref, is refused"
+
+# --lessons packs the kept lap lessons; a missing file is fine (no lessons kept yet).
+printf '# Lap lessons\n- Scope the suite. (lap lap-1)\n' > "$tmp/lessons.md"
+bash "$P" --lessons "$tmp/lessons.md" "$proj" lap-l "$tmp/ws/V3-1" >/dev/null 2>&1; assert_eq 0 $? "packs with lessons"
+assert_eq "$(cat "$tmp/lessons.md")" "$(cat "$proj/docs/gauntlet/lap-l/lap-lessons.md")" "lessons copied verbatim"
+bash "$P" --lessons "$tmp/none.md" "$proj" lap-m "$tmp/ws/V3-1" >/dev/null 2>&1; assert_eq 0 $? "a missing lessons file does not block"
+[ -e "$proj/docs/gauntlet/lap-m/lap-lessons.md" ] && _ko "nothing packed when there are no lessons" || _ok
 finish

@@ -36,4 +36,14 @@ assert_contains "$brief" "{critic_model}" "the brief names the critic model"
 assert_contains "$rules" "reuse the 2.4 panel" "the final review reuses the ticket review when the tip is unchanged"
 assert_contains "$rules" 'G="$(pwd)/docs/gauntlet"' "GO fixes the absolute lap folder"
 assert_contains "$brief" "this round's handoff" "done-means follows the round"
+# Lap lessons travel both ways.
+assert_contains "$rules" '$G/<lap>/lap-lessons.md' "GO reads the kept lap lessons"
+assert_contains "$rules" "## 7. Lap lessons" "the handoff proposes lap lessons"
+# The laptop side.
+skill=$(cat "$ROOT/skills/lap/SKILL.md")
+assert_contains "$skill" "## /v3-lap lessons" "the skill keeps lessons on the user's word"
+assert_contains "$skill" "lap-lessons.sh" "kept lessons go through lap-lessons.sh"
+assert_contains "$skill" "--lessons" "start packs the lessons"
+assert_contains "$skill" "answers-r<k>.md" "answers are saved per round"
+assert_contains "$skill" "## Answer copy" "answers are copied where the config says"
 finish

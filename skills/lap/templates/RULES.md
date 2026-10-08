@@ -32,6 +32,7 @@ Read the lead brief and every ticket folder. Check `BASE` (rail 3). Note the sto
 - Some project tools compare against `origin/<base_branch>`; there is no remote here, so create it: `git update-ref refs/remotes/origin/<base_branch> $BASE`. Delete it at cleanup (`git update-ref -d refs/remotes/origin/<base_branch>`).
 - **Prior art:** when a ticket has `docs/gauntlet/<lap>/tickets/<id>/prior-art/`, read its `prior-art.md` index and the extracts it lists, then every note in `docs/gauntlet/<lap>/learnings/` that the index names. These are lessons from earlier tickets in the owner's notes: traps, dead ends and past review findings in the same code. They do not outrank the ticket's bar or rulings; when one contradicts a ruling, that is a T2 question in the handoff, not a silent pick.
 - **Resume:** when `docs/gauntlet/<lap>/resume/resume.tsv` exists, each row (`id ref tip commits`) is a ticket an earlier lap started and lost. Create its ticket branch from the bundle: `git fetch docs/gauntlet/<lap>/resume/<id>.bundle "<ref>:refs/heads/devbox/<lap>/<branch>"` and check it ends at `tip`. Those commits stay; the brief's resume note says which tasks they cover. Before skipping a task, check its commit is there and its test passes; anything unproven is redone.
+- **Lap lessons:** when `$G/<lap>/lap-lessons.md` exists, read it before anything else in the tickets. Each line is a rule the owner kept from an earlier lap (a slip that cost time). Follow them like house rules; when one contradicts these rules, these rules win and the clash is a line in handoff section 4.
 - Ledger `go`.
 
 ### 2.2 Freeze the base and bring the stack up
@@ -191,4 +192,10 @@ source_ticket: <id>
 ---
 # <one-line claim>
 <two to five sentences: the behaviour, where it bites, how to avoid it>
+
+## 7. Lap lessons
+At most five, numbered, one line each: a rule for future laps that would have saved time on this
+one (how to run the stack, the gates, the tools, the helpers), written as an instruction. Only
+lessons not already in the packed lap-lessons.md. None is a fine answer.
+1. <instruction, one line>
 ```
