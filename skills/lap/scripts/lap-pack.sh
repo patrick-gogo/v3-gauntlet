@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
 # Copy Planned tickets into a lap folder inside the work project, so a devbox job (which sees only the repo) can read them.
-# Usage: lap-pack.sh [--vault <dir>] [--resume <id>=<ref>]... <project-root> <lap-id> <ticket-workspace>...
+# Usage: lap-pack.sh [--vault <dir>] [--lessons <file>] [--resume <id>=<ref>]... <project-root> <lap-id> <ticket-workspace>...
 # Writes <root>/docs/gauntlet/<lap-id>/tickets/<id>/{state,ticket,bar,context,design,plan,rulings,scope}, tickets.tsv
 # and tools/ (scripts the lead runs). With --vault, also each ticket's prior-art/ (prior-art.sh) and the vault's
 # learnings/ notes. With --resume, the ticket's unfinished branch <ref> (built on the root's HEAD, the lap base)
 # goes in resume/<id>.bundle, listed in resume/resume.tsv, so a resumed lap keeps the work a lost lap finished.
+# With --lessons, the owner's kept lap lessons go in lap-lessons.md (a missing file means none kept yet).
 # Exit: 0 packed, 2 bad input (nothing written).
 set -u
-usage="usage: lap-pack.sh [--vault <dir>] [--resume <id>=<ref>]... <project-root> <lap-id> <ticket-workspace>..."
-vault=""; resumes=""
+usage="usage: lap-pack.sh [--vault <dir>] [--lessons <file>] [--resume <id>=<ref>]... <project-root> <lap-id> <ticket-workspace>..."
+vault=""; resumes=""; lessons=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --vault) [ $# -ge 2 ] && [ -n "$2" ] || { echo "$usage" >&2; exit 2; }; vault=$2; shift 2 ;;
+    --lessons) [ $# -ge 2 ] && [ -n "$2" ] || { echo "$usage" >&2; exit 2; }; lessons=$2; shift 2 ;;
     --resume)
       case "${2:-}" in ?*=?*) ;; *) echo "$usage" >&2; exit 2 ;; esac
       resumes="$resumes $2"; shift 2 ;;
@@ -76,6 +78,7 @@ if [ -n "$vault" ] && [ -d "$vault/learnings" ]; then
   for l in "$vault/learnings"/*.md; do [ -f "$l" ] && [ "$(basename "$l")" != Learnings.md ] && cp "$l" "$dest/learnings/"; done
 fi
 mkdir -p "$dest/tools" && cp "$(dirname "$0")/../../v3-review/scripts/scoped-tests.sh" "$(dirname "$0")/../../v3-review/scripts/gate-select.sh" "$dest/tools/" || exit 2
+[ -z "$lessons" ] || [ ! -f "$lessons" ] || cp "$lessons" "$dest/lap-lessons.md" || exit 2
 if [ -n "$resumes" ]; then
   mkdir -p "$dest/resume"
   printf 'id\tref\ttip\tcommits\n' > "$dest/resume/resume.tsv"
