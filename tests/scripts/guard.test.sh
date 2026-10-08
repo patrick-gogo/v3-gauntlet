@@ -60,6 +60,8 @@ hook "$R" 'git push -u origin main'; assert_eq 0 "$code" "push with no tickets a
 ticket T-1 implementing feat/t-1
 git -C "$R" switch -q feat/t-1
 hook "$R" 'git push -u origin feat/t-1'; assert_eq 2 "$code" "push before approval blocked"
+ticket T-1 in-lap feat/t-1
+hook "$R" 'git push -u origin feat/t-1'; assert_eq 2 "$code" "push of a ticket in a lap blocked until push day approves it"
 assert_contains "$err" "T-1" "push block names the ticket"
 ticket T-1 handoff feat/t-1 'push_approved: yes
 '
@@ -76,7 +78,7 @@ for ph in intake designed planned pr closed; do
   ticket T-1 "$ph" feat/t-1
   hook "$R" 'git commit -m "fix: y"'; assert_eq 0 "$code" "commit on base allowed in phase $ph"
 done
-for ph in approved round2 handoff blocked; do
+for ph in approved in-lap round2 handoff blocked; do
   ticket T-1 "$ph" feat/t-1
   hook "$R" 'git commit -m "fix: y"'; assert_eq 2 "$code" "commit on base blocked in phase $ph"
 done
