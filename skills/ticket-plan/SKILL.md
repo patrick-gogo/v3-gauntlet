@@ -51,9 +51,9 @@ Each item is a ruling unless it follows mechanically from the rule given.
 6. **Exit pair and graded bar:** `S set exit_pair none` and leave `graded` unset unless `CFG` gives defaults for them (ruling either way, level T1).
 
 ## 8. Rulings batch (the one stop)
-1. Append a `## Batch <k>` section to `WS/rulings.md` listing the rulings to review (batch 1: all of them), numbered from 1 in this batch, with a pointer to each ruling's `R` number. With `queue: notion`: `$Q page --key <id> --file WS/rulings.md --child Rulings`. Then show the user, in this order:
+1. T1 rulings are not asked: set each one's `source: auto` (accepted automatically; the user can still read or change them in `rulings.md`). Append a `## Batch <k>` section to `WS/rulings.md` listing only the T2 and T3 rulings to review (batch 1: every T2 and T3 ruling), numbered from 1 in this batch, with a pointer to each ruling's `R` number. With `queue: notion`: `$Q page --key <id> --file WS/rulings.md --child Rulings`. Then show the user, in this order:
    ```
-   <id> <title>: planned, waiting for your answers (<n> rulings)
+   <id> <title>: planned, waiting for your answers (<n> rulings to answer, <m> technical ones accepted)
 
    Plan: <tasks_total> tasks, depth <depth>, waves <summary>, gates <names>
    AC: AC1 ..., AC2 ...                     (one line each)
@@ -64,14 +64,15 @@ Each item is a ruling unless it follows mechanically from the rule given.
    - **Pick:** <your decision>
    - **Why:** <one line> (alt: <the main alternative>; cost if wrong: <low|medium|high>)
 
-   **2. <short title>** · T1
+   **2. <short title>** · T3
    - ...
 
-   To accept every pick: all keep
+   To accept every pick: all keep   ("show T1" lists the accepted technical rulings)
    ```
-   One block per ruling, each field on its own line. Put T3 and T2 rulings first, then T1. Keep each field to one or two lines. Give the workspace path for the full plan and design.
+   One block per ruling, each field on its own line. T3 rulings first, then T2. Keep each field to one or two lines. Give the workspace path for the full plan and design.
 2. Parse the answer with `bash "$SKILL_DIR/../ticket-workspace/scripts/ruling-reply.sh" <n> "<reply>"`. Exit 2 → show its message and ask again (only the unanswered or unclear numbers).
 3. For each `keep`: set that ruling's `source: user`. For each `change <text>`: update the ruling (`Decision` per the user's text, `source: user`), then apply it to whatever it governs (`bar.md`, `design.md`, `plan.md`, `scope.txt`, state keys). A change that alters tasks re-dispatches the planner with the updated rulings; then repeat step 7 for anything the new plan affects. With `queue: notion`, once the answers are recorded, repeat the `Rulings` page call from 8.1 so the page shows `source: user`.
+   **No T2 or T3 ruling** in a batch: show the plan header with "nothing to answer, <m> technical rulings accepted" and go straight on to section 9, without stopping. "show T1" at any point lists the T1 rulings in the same block layout; a `change` to one makes it a `source: user` ruling as above.
 4. If any answer was `change`, start a new batch containing only the rulings that changed and any new ones the changes produced, and go back to 8.1. When a batch comes back all `keep`, go on.
 
 ## 9. Planned
