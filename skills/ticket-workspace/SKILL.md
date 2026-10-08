@@ -36,6 +36,7 @@ handoff.md      the SHIP report; pr-body.md the draft PR body
 **Guard hook.** While a ticket is open, the plugin's PreToolUse hook (`hooks/guard.sh`) blocks `git push` from the ticket branch before phase `pr` unless `push_approved: yes`, and blocks `git commit` on the ticket's `base_branch` from `approved` to `handoff` (including `blocked` and `round2`). It always blocks tool attribution in commits and PRs. A block is a message to act on (commit on the ticket branch; push only from SHIP), never a reason to work around the hook.
 ```
 intake → designed → planned → approved → implementing → reviewing ⇄ fixing → ready
+approved → in-lap → pr      in-lap → approved (lap lost, or ended without pushing it)
 implementing | reviewing | fixing → blocked
 ready | blocked → handoff → round2 → implementing ...      handoff → pr → closed
 ```
@@ -45,6 +46,7 @@ ready | blocked → handoff → round2 → implementing ...      handoff → pr 
 |---|---|
 | none, intake, designed, planned | `v3-gauntlet:ticket-plan` |
 | approved | waiting in the queue; `v3-gauntlet:ticket-build` only with `build` |
+| in-lap | a lap is building it on the devbox (`lap` names it); `/v3-lap result`, `resume` or `push` moves it on |
 | round2, implementing, reviewing, fixing | `v3-gauntlet:ticket-build` |
 | ready, blocked, handoff | `v3-gauntlet:ticket-ship` |
 | pr | `v3-gauntlet:ticket-close` |
@@ -73,6 +75,11 @@ reviewer_agent: <agent name>      extra "conventions" critic in /v3-review; copi
 lap_stop_time: HH:MM              no new ticket starts in a lap after this time (default 06:30)
 lap_timezone: <tz>                for the stop time (default Asia/Manila, the devbox's zone)
 lap_parallel: on | off            tickets in a lap at once (default off)
+lap_helper_model: <model>         lap implementers and task reviewers (default sonnet)
+lap_critic_model: <model>         lap ticket critics, challenger, final review panel, audit (default inherit: the lead's model)
+tests_root: <dir>                 the Python project folder {tests} is scoped in (e.g. backend; default .)
+task_gates: <name> ...            gates re-run after each task (default every gate); the full set runs at ticket end
+gate_paths.<name>: <prefix> ...   skip that gate when the change touches none of these path prefixes
 lap_worktree_dir: <path>          where /v3-lap makes its clean temporary copy (and push day its temporary push worktrees)
 prior_art_vault: <path>           the owner's notes vault (tickets/<id>/ and learnings/): a lap packs each ticket's prior art from it, and /v3-lap learn writes kept learnings back
 checkout: worktree | main         where BUILD works (default worktree: an EnterWorktree worktree, so the main checkout keeps its branch; main builds in the main checkout)
@@ -99,6 +106,7 @@ push_merge_base: yes | no         lap push day merges the base branch into a tic
 
 ## Gates
 <name>: <command>                 a lap replaces {base} with the frozen base commit
+                                  {tests}: the test files the change touches, from `scoped-tests.sh` (see Gates below)
 
 ## Stack
 <how to bring the project's stack up and down on the build machine; copied into the lap rules>
@@ -110,6 +118,9 @@ push_merge_base: yes | no         lap push day merges the base branch into a tic
 <how to open PRs and announce them after "push"; free text, read on the laptop>
 ```
 The queue's token is never in this file: `notion-queue.mjs` reads `NOTION_TOKEN` and `GAUNTLET_QUEUE_DB` from the environment or `~/.config/v3-gauntlet/notion.env`.
+
+## Gates
+A gate command may hold `{tests}`, so it never runs a whole suite that cannot pass or finish. Wherever a gate runs, replace `{tests}` at that moment with the lines `bash "$R/scoped-tests.sh" --root <tests_root> --scope <WS>/scope.txt <base> HEAD` prints, joined by spaces; a baseline adds `--exist-at <base>` and runs at the base. Exit 1 (no test touches the change) → the gate is `none` for this run, recorded; never run it with `{tests}` empty. stderr names any hub module it skipped. Which gates run: after a task, `gate-select.sh --task <config> <task base> HEAD`; at ticket end and in the review loop, `gate-select.sh <config> <base> HEAD`; a baseline, `--all`. `<config>` is the main checkout's `.claude/v3-gauntlet.md` by absolute path (it is not in a ticket worktree: `dirname "$(git rev-parse --path-format=absolute --git-common-dir)"` is the main checkout). Exit 3 (no config or no `## Gates` section, gates detected instead) → run every recorded `gate.<name>`. The scripts live in `v3-gauntlet:v3-review`'s `scripts/` (`$R` in BUILD). A command that runs in a container carries its own `timeout` there: `run-gate.sh` stops the command on the host, not inside the container.
 
 ## Rulings
 Every decision a stage makes on its own is a ruling. Nothing waits for the user: the stage takes its recommendation and the user reviews the rulings in a batch (PLAN step 8; the handoff after BUILD).
@@ -135,6 +146,8 @@ Ledger line: `<UTC time> <step> <result>`. Ledger time: always `date -u +%Y-%m-%
 |---|---|
 | `state.sh <state.md> get/set/incr/phase ...` | state and phases |
 | `ticket-ws.sh path/init/list` | workspace location |
+| `../v3-review/scripts/scoped-tests.sh [--root d] [--scope f] [--exist-at rev] <base> [<head>]` | the test files a change touches, for `{tests}` (exit 1: none) |
+| `../v3-review/scripts/gate-select.sh [--task|--all] <config> <base> [<head>]` | which gates a change runs (`task_gates`, `gate_paths.*`) |
 | `branch-name.sh [--prefix p] [--keep-id-case] <type> <id> <title...>` | branch name |
 | `ruling-reply.sh <n> "<reply>"` | parse a batch reply into `<k> keep` / `<k> change <text>` lines; exit 2 names what is missing or unclear |
 | `node notion-queue.mjs check / list [--status S] / upsert --key K --title T [...] / status --key K --status S [...]` | the queue board (exit 1 key not in queue, 2 bad input, 3 could-not-run) |

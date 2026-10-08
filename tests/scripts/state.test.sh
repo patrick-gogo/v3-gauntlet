@@ -32,6 +32,13 @@ g="$tmp/other.md"; bash "$ST" "$g" phase approved 2>/dev/null; assert_eq 2 $? "n
 h="$tmp/lap/state.md"; for p in intake designed planned approved pr; do bash "$ST" "$h" phase "$p" || _ko "lap walk: $p refused"; done
 assert_eq pr "$(bash "$ST" "$h" get phase)" "approved -> pr is legal (lap push day)"
 
+# A ticket in a lap is in-lap: push day lands it at pr, a lost lap hands it back to approved.
+k="$tmp/inlap/state.md"; for p in intake designed planned approved in-lap pr; do bash "$ST" "$k" phase "$p" || _ko "in-lap walk: $p refused"; done
+assert_eq pr "$(bash "$ST" "$k" get phase)" "approved -> in-lap -> pr is legal"
+m="$tmp/lost/state.md"; for p in intake designed planned approved in-lap approved; do bash "$ST" "$m" phase "$p" || _ko "lost-lap walk: $p refused"; done
+assert_eq approved "$(bash "$ST" "$m" get phase)" "in-lap -> approved is legal (lap lost)"
+bash "$ST" "$m" phase in-lap; bash "$ST" "$m" phase implementing 2>/dev/null; assert_eq 2 $? "in-lap -> implementing refused (hand it back first)"
+
 bash "$ST" "$f" set exit_pair "--db-pattern 'test\.db\$'"
 bash "$ST" "$f" set exit_pair "--db-pattern 'app\.db\$'"
 assert_eq "--db-pattern 'app\.db\$'" "$(bash "$ST" "$f" get exit_pair)" "backslashes survive an overwrite"

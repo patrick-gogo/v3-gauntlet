@@ -18,4 +18,22 @@ assert_contains "$rules" "docs/gauntlet/<lap>/tickets/<id>/prior-art/" "GO reads
 assert_contains "$rules" "## 6. Proposed learnings" "the handoff has a proposed learnings section"
 assert_contains "$rules" "components:" "a proposed learning carries its components"
 assert_contains "$brief" "prior-art" "the brief lists the prior-art folder"
+# Resume, checkpoints and rounds.
+assert_contains "$rules" "docs/gauntlet/<lap>/resume/resume.tsv" "GO fetches resume bundles"
+assert_contains "$rules" "Checkpoint" "the lead commits its record as it goes"
+assert_contains "$rules" "docs/gauntlet/<lap>-handoff-r<k>.md" "each round writes its own handoff"
+assert_contains "$brief" "{resume_note}" "the brief carries the resume note"
+# The backend gate is scoped and the stack is the lap's own.
+assert_contains "$rules" "/tmp/stack-<lap>" "the stack folder, and so its compose project, is the lap's own"
+assert_not_contains "$rules" "/tmp/lap-base" "no shared stack folder name across laps"
+assert_contains "$rules" "switch --detach <ticket tip>" "container gates run on the ticket's code"
+assert_contains "$rules" '$G/<lap>/tools/scoped-tests.sh' "gates replace {tests} with the scoped list"
+assert_contains "$rules" '$G/<lap>/tools/gate-select.sh --task $G/RULES.md <task base> <ticket tip>' "per-task gates come from gate-select"
+assert_contains "$rules" "git add -f" "logs are committed past a .gitignore"
+# Cost.
+assert_contains "$brief" "{helper_model}" "the brief names the helper model"
+assert_contains "$brief" "{critic_model}" "the brief names the critic model"
+assert_contains "$rules" "reuse the 2.4 panel" "the final review reuses the ticket review when the tip is unchanged"
+assert_contains "$rules" 'G="$(pwd)/docs/gauntlet"' "GO fixes the absolute lap folder"
+assert_contains "$brief" "this round's handoff" "done-means follows the round"
 finish

@@ -104,8 +104,8 @@ if [ -z "$pushbrs" ] && [ -z "$cur" ]; then exit 0; fi
 br=$cur
 list=$(cd "$dir" && bash "$TW/ticket-ws.sh" list 2>/dev/null) || exit 0
 [ -n "$list" ] || exit 0
-PRE_PR=" intake designed planned approved implementing reviewing fixing ready blocked handoff round2 "
-IN_BUILD=" approved implementing reviewing fixing ready blocked handoff round2 "
+PRE_PR=" intake designed planned approved in-lap implementing reviewing fixing ready blocked handoff round2 "
+IN_BUILD=" approved in-lap implementing reviewing fixing ready blocked handoff round2 "
 tab=$(printf '\t')
 while IFS=$tab read -r id phase; do
   [ -n "$id" ] || continue

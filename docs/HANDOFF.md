@@ -86,6 +86,15 @@ Laptop and repo
 - Limit: prior art covers code traps and past findings in the vault, not tracker rulings. A ruling that lives only in the tracker (lap 3's tax add-back) is not found this way.
 - Considered and not built: sending the whole vault as a second devbox repo. Whether a job can read another repo in the space is unknown; a probe that would have reused the space's key was refused.
 
+## Built in 0.7.0 (2026-10-08)
+- Lost laps: a devbox job can die on a short network error (`EAI_AGAIN`) with no retry, and one lap was lost that way. `/v3-lap result` now spots a failed job or a missing handoff, reads the branches and the checkpoint ledger that came home, hands the tickets back to `approved` and names the next step. `/v3-lap resume` packs a new lap on the same base, with each unfinished ticket branch as a git bundle (`lap-pack.sh --resume`), so finished task commits are kept and push day's base check still holds. The lead commits its record after every task (RULES rail 14).
+- `in-lap` phase: a ticket in a lap can no longer be packed into a second lap, and `/v3-ticket` names the lap. The guard hook treats it like `approved`.
+- Scoped backend gate: a gate may hold `{tests}`, replaced by `scoped-tests.sh` (changed tests, tests importing a changed module, tests named after it, a changed conftest's folder; only files that exist; a module more than 25 tests import is a hub and its importers are skipped). The baseline is per ticket. Container gates carry their own `timeout`. Each lap runs its stack from its own worktree `/tmp/stack-<lap>` (the folder name is the compose project, so no variable has to survive between shells), switches it to a ticket's tip before that ticket's container gates, and drops its own volumes at the end. Lap commands name the lap folder by absolute path (`$G`).
+- Rounds: round k writes `<lap>-handoff-r<k>.md` and `r<k>-` logs; the laptop keeps every round's handoff. Logs are committed with `git add -f`.
+- Cost: lap helpers get a named model (`lap_helper_model`, default sonnet; `lap_critic_model`, default the lead's); after a task only the gates `gate-select.sh --task` picks run (`task_gates`, `gate_paths.*`); the final review reuses the ticket review when the tip has not changed, and otherwise reviews only the commits since.
+- Also: `tickets.tsv` no longer carries the planning-time base (the lap has one base); `lap-pack.sh` refuses a bare `--vault` and no longer uses error text as a printf format.
+- Not built: a retry inside devbox itself (that is the devbox author's side).
+
 ## Next
-1. Run a lap with 0.6.0 end to end: does `prior-art/` arrive, does the lead cite it, does a proposed learning come home.
+1. Run a lap with 0.7.0 end to end: scoped gate on a real ticket, a checkpoint commit, and (when one happens) a resume.
 2. Batch mode for the ticket planner ("plan many, answer once"), after a 3-ticket lap has worked.
